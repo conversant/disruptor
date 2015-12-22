@@ -11,7 +11,6 @@ import com.conversant.util.estimation.Percentile;
 @Ignore
 public class MultithreadConcurrentQueuePerfTest {
 
-
     @Test
     public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
         System.out.println("1x1 using MultiThread");

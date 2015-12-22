@@ -8,7 +8,6 @@ interface QueueCondition {
 
     long PARK_TIMEOUT = 50L;
 
-
     // return true if the queue condition is satisfied
     boolean test();
 

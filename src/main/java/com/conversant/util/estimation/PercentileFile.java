@@ -9,7 +9,6 @@ import java.io.IOException;
  */
 public final class PercentileFile {
 
-
     public static final void main(final String[] arg) throws IOException {
 
 

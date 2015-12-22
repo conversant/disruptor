@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by jcairns on 5/28/14.
  */
 final class PaddedAtomicInteger extends AtomicInteger {
-	private volatile int p0;
+    private volatile int p0;
 	private volatile long p1, p2, p3, p4, p5, p6;
 
 	public PaddedAtomicInteger(final int init) {
