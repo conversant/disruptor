@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class PaddedAtomicInteger extends AtomicInteger {
     private volatile int p0;
-	private volatile long p1, p2, p3, p4, p5, p6;
+    private volatile long p1, p2, p3, p4, p5, p6;
 
-	public PaddedAtomicInteger(final int init) {
-		super(init);
-	}
+    public PaddedAtomicInteger(final int init) {
+        super(init);
+    }
 
-	public long sumToAvoidOptimization() {
-		return p0+p1+p2+p3+p4+p5+p6;
-	}
+    public long sumToAvoidOptimization() {
+        return p0+p1+p2+p3+p4+p5+p6;
+    }
 
 }

@@ -11,16 +11,16 @@ import com.conversant.util.estimation.Percentile;
 @Ignore
 public class PushPullConcurrentQueuePerfTest {
 
-	@Test
-	public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
-		System.out.println("PushPull");
-		ConcurrentQueuePerformanceTest.testPerformance(new PushPullConcurrentQueue<Integer>(64));
-	}
+    @Test
+    public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
+        System.out.println("PushPull");
+        ConcurrentQueuePerformanceTest.testPerformance(new PushPullConcurrentQueue<Integer>(64));
+    }
 
 
-	@Test
-	public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
-		ConcurrentQueuePerformanceTest.testRate(new PushPullConcurrentQueue<Integer>(64));
-	}
+    @Test
+    public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
+        ConcurrentQueuePerformanceTest.testRate(new PushPullConcurrentQueue<Integer>(64));
+    }
 
 }

@@ -11,243 +11,243 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by jcairns on 5/29/14.
  */
 public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
-	/*
-	 * Note to future developers/maintainers - This code is highly tuned
-	 * and possibly non-intuitive.    Rigorous performance and functional
-	 * testing should accompany any proposed change
-	 *
-	 */
+    /*
+     * Note to future developers/maintainers - This code is highly tuned
+     * and possibly non-intuitive.    Rigorous performance and functional
+     * testing should accompany any proposed change
+     *
+     */
 
-	// maximum allowed capacity
-	// this must always be a power of 2
-	//
-	protected final int      size;
-	// we need to compute a position in the ring buffer
-	// modulo size, since size is a power of two
-	// compute the bucket position with x&(size-1)
-	// aka x&mask
-	protected final long     mask;
+    // maximum allowed capacity
+    // this must always be a power of 2
+    //
+    protected final int      size;
+    // we need to compute a position in the ring buffer
+    // modulo size, since size is a power of two
+    // compute the bucket position with x&(size-1)
+    // aka x&mask
+    protected final long     mask;
 
-	// notes about modulos size:
-	// for positive x, x % size = x & (size-1)
-	// for negative values, x % size = -(-x&(size-1))
-	// this is because the & takes off the sign
-	// we don't need to compute the precise modulo
-	// because the bitwise AND still captures the
-	// correct sequence even for negative values,
-	// i.e. 0, 1, 2, ..., m, 0, 1, 2, ..., m
-
-
-	// a ring buffer representing the queue
-	protected final E[] buffer;
-
-	// this data structure is sensitive to the head/tail sequence numbers
-	// rolling negative, the capacity check comparisons have all been cast
-	// with positive sequence numbers in mind
-
-	// now that we are using longs, good luck living long enough
-	// to see this roll in production ;-)
-
-	// ...in case your wondering the answer is 292 years
+    // notes about modulos size:
+    // for positive x, x % size = x & (size-1)
+    // for negative values, x % size = -(-x&(size-1))
+    // this is because the & takes off the sign
+    // we don't need to compute the precise modulo
+    // because the bitwise AND still captures the
+    // correct sequence even for negative values,
+    // i.e. 0, 1, 2, ..., m, 0, 1, 2, ..., m
 
 
-	// the sequence number of the end of the queue
-	protected final AtomicLong tail = new PaddedAtomicLong(0L);
-	// the sequence number of the start of the queue
-	protected final AtomicLong head =  new PaddedAtomicLong(0L);
+    // a ring buffer representing the queue
+    protected final E[] buffer;
 
-	// use the value in the L1 cache rather than reading from memory when possible
-	protected final PaddedLong tailCache = new PaddedLong(0L);
-	protected final PaddedLong headCache = new PaddedLong(0L);
+    // this data structure is sensitive to the head/tail sequence numbers
+    // rolling negative, the capacity check comparisons have all been cast
+    // with positive sequence numbers in mind
 
-	// The readers must know if the tail has been updated
-	// by concurrently executing write operations.
-	// This is updated at the end of the write operation
-	// to allow readers thread safe access to the queue tail.
-	protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
-	protected final AtomicLong headCursor = new PaddedAtomicLong(0L);
+    // now that we are using longs, good luck living long enough
+    // to see this roll in production ;-)
 
-	/**
-	 * Construct a blocking queue of the given fixed capacity.
-	 *
-	 * Note: actual capacity will be the next power of two
-	 * larger than capacity.
-	 *
-	 * @param capacity maximum capacity of this queue
-	 */
+    // ...in case your wondering the answer is 292 years
 
-	public MultithreadConcurrentQueue(final int capacity) {
-		int c = 1;
-		while(c < capacity) c <<=1;
-		size = c;
-		mask = size - 1L;
-		buffer = (E[])new Object[size];
-	}
 
-	@Override
-	public boolean offer(E e) {
-		for(;;) {
-			final long tailSeq = tail.get();
-			// never offer onto the slot that is currently being polled off
-			final long queueStart = tailSeq - size;
+    // the sequence number of the end of the queue
+    protected final AtomicLong tail = new PaddedAtomicLong(0L);
+    // the sequence number of the start of the queue
+    protected final AtomicLong head =  new PaddedAtomicLong(0L);
 
-			// will this sequence exceed the capacity
-			if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
-				final long tailNext = tailSeq + 1L;
-				// does the sequence still have the expected
-				// value
-				if(tailCursor.compareAndSet(tailSeq, tailNext)) {
+    // use the value in the L1 cache rather than reading from memory when possible
+    protected final PaddedLong tailCache = new PaddedLong(0L);
+    protected final PaddedLong headCache = new PaddedLong(0L);
 
-					try {
-						// tailSeq is valid
-						// and we got access without contention
+    // The readers must know if the tail has been updated
+    // by concurrently executing write operations.
+    // This is updated at the end of the write operation
+    // to allow readers thread safe access to the queue tail.
+    protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
+    protected final AtomicLong headCursor = new PaddedAtomicLong(0L);
 
-						// convert sequence number to slot id
-						final int tailSlot = (int)(tailSeq&mask);
-						buffer[tailSlot] = e;
+    /**
+     * Construct a blocking queue of the given fixed capacity.
+     *
+     * Note: actual capacity will be the next power of two
+     * larger than capacity.
+     *
+     * @param capacity maximum capacity of this queue
+     */
 
-						return true;
-					} finally {
-						tail.lazySet(tailNext);
-					}
-				} // else - sequence misfire, somebody got our spot, try again
-			} else {
-				// exceeded capacity
-				return false;
-			}
+    public MultithreadConcurrentQueue(final int capacity) {
+        int c = 1;
+        while(c < capacity) c <<=1;
+        size = c;
+        mask = size - 1L;
+        buffer = (E[])new Object[size];
+    }
+
+    @Override
+    public boolean offer(E e) {
+        for(;;) {
+            final long tailSeq = tail.get();
+            // never offer onto the slot that is currently being polled off
+            final long queueStart = tailSeq - size;
+
+            // will this sequence exceed the capacity
+            if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
+                final long tailNext = tailSeq + 1L;
+                // does the sequence still have the expected
+                // value
+                if(tailCursor.compareAndSet(tailSeq, tailNext)) {
+
+                    try {
+                        // tailSeq is valid
+                        // and we got access without contention
+
+                        // convert sequence number to slot id
+                        final int tailSlot = (int)(tailSeq&mask);
+                        buffer[tailSlot] = e;
+
+                        return true;
+                    } finally {
+                        tail.lazySet(tailNext);
+                    }
+                } // else - sequence misfire, somebody got our spot, try again
+            } else {
+                // exceeded capacity
+                return false;
+            }
 
             Thread.yield();
-		}
-	}
+        }
+    }
 
-	@Override
-	public E poll() {
-		for(;;) {
-			final long head = this.head.get();
-			// is there data for us to poll
-			if((tailCache.value > head) || (tailCache.value= tail.get()) > head) {
-				final long headNext = head+1L;
-				// check if we can update the sequence
-				if(headCursor.compareAndSet(head, headNext)) {
-					try {
-						// copy the data out of slot
-						final int pollSlot = (int)(head&mask);
-						final E   pollObj  = (E) buffer[pollSlot];
+    @Override
+    public E poll() {
+        for(;;) {
+            final long head = this.head.get();
+            // is there data for us to poll
+            if((tailCache.value > head) || (tailCache.value= tail.get()) > head) {
+                final long headNext = head+1L;
+                // check if we can update the sequence
+                if(headCursor.compareAndSet(head, headNext)) {
+                    try {
+                        // copy the data out of slot
+                        final int pollSlot = (int)(head&mask);
+                        final E   pollObj  = (E) buffer[pollSlot];
 
-						// got it, safe to read and free
-						buffer[pollSlot] = null;
+                        // got it, safe to read and free
+                        buffer[pollSlot] = null;
 
-						return pollObj;
-					} finally {
-						this.head.lazySet(headNext);
-					}
-				} // else - somebody else is reading this spot already: retry
-			} else {
-				return null;
-				// do not notify - additional capacity is not yet available
-			}
+                        return pollObj;
+                    } finally {
+                        this.head.lazySet(headNext);
+                    }
+                } // else - somebody else is reading this spot already: retry
+            } else {
+                return null;
+                // do not notify - additional capacity is not yet available
+            }
 
-			// this is the spin waiting for access to the queue
+            // this is the spin waiting for access to the queue
             Thread.yield();
-		}
-	}
+        }
+    }
 
-	@Override
-	public final E peek() {
-		return buffer[(int)(head.get()&mask)];
-	}
+    @Override
+    public final E peek() {
+        return buffer[(int)(head.get()&mask)];
+    }
 
 
-	@Override
-	// drain the whole queue at once
-	public int remove(final E[] e) {
+    @Override
+    // drain the whole queue at once
+    public int remove(final E[] e) {
 
-		/* This employs a "batch" mechanism to load all objects from the ring
-		 * in a single update.    This could have significant cost savings in comparison
-		 * with poll
-		 */
-		final int maxElements = e.length;
+        /* This employs a "batch" mechanism to load all objects from the ring
+         * in a single update.    This could have significant cost savings in comparison
+         * with poll
+         */
+        final int maxElements = e.length;
 
-		for(;;) {
-			final long pollPos = head.get(); // prepare to qualify?
-			// is there data for us to poll
-			// note we must take a difference in values here to guard against
-			// integer overflow
-			final int nToRead = Math.min((int)(tail.get() - pollPos), maxElements);
-			if(nToRead > 0 ) {
+        for(;;) {
+            final long pollPos = head.get(); // prepare to qualify?
+            // is there data for us to poll
+            // note we must take a difference in values here to guard against
+            // integer overflow
+            final int nToRead = Math.min((int)(tail.get() - pollPos), maxElements);
+            if(nToRead > 0 ) {
 
-				for(int i=0; i<nToRead;i++) {
-					final int pollSlot = (int)((pollPos+i)&mask);
-					e[i] = buffer[pollSlot];
-				}
+                for(int i=0; i<nToRead;i++) {
+                    final int pollSlot = (int)((pollPos+i)&mask);
+                    e[i] = buffer[pollSlot];
+                }
 
-				// if we still control the sequence, update and return
+                // if we still control the sequence, update and return
                 if(headCursor.compareAndSet(pollPos,  pollPos+nToRead)) {
                     head.lazySet(pollPos+nToRead);
                     return nToRead;
-				}
-			} else {
-				// nothing to read now
-				return 0;
-			}
-			// wait for access
-		}
-	}
+                }
+            } else {
+                // nothing to read now
+                return 0;
+            }
+            // wait for access
+        }
+    }
 
-	@Override
-	public final int size() {
-		// size of the ring
-		// note these values can roll from positive to
-		// negative, this is properly handled since
-		// it is a difference
-		return (int)(tail.get() - head.get());
-	}
+    @Override
+    public final int size() {
+        // size of the ring
+        // note these values can roll from positive to
+        // negative, this is properly handled since
+        // it is a difference
+        return (int)(tail.get() - head.get());
+    }
 
-	@Override
-	public int capacity() {
-		return size;
-	}
+    @Override
+    public int capacity() {
+        return size;
+    }
 
-	@Override
-	public final boolean isEmpty() {
-		return size() == 0;
-	}
+    @Override
+    public final boolean isEmpty() {
+        return size() == 0;
+    }
 
-	@Override
-	public void clear() {
-		for(;;) {
-			final long head = this.head.get();
-			if(headCursor.compareAndSet(head, head+1)) {
-				for(;;) {
-					final long tail = this.tail.get();
-					if (tailCursor.compareAndSet(tail, tail + 1)) {
+    @Override
+    public void clear() {
+        for(;;) {
+            final long head = this.head.get();
+            if(headCursor.compareAndSet(head, head+1)) {
+                for(;;) {
+                    final long tail = this.tail.get();
+                    if (tailCursor.compareAndSet(tail, tail + 1)) {
 
-						// we just blocked all changes to the queue
+                        // we just blocked all changes to the queue
 
-						// remove leaked refs
-						for (int i = 0; i < buffer.length; i++) {
-							buffer[i] = null;
-						}
+                        // remove leaked refs
+                        for (int i = 0; i < buffer.length; i++) {
+                            buffer[i] = null;
+                        }
 
-						// advance head to same location as current end
-						this.head.lazySet(tail+1);
-						this.tail.lazySet(tail+1);
-						headCursor.lazySet(tail + 1);
+                        // advance head to same location as current end
+                        this.head.lazySet(tail+1);
+                        this.tail.lazySet(tail+1);
+                        headCursor.lazySet(tail + 1);
 
-						return;
-					}
-				}
-			}
-		}
-	}
+                        return;
+                    }
+                }
+            }
+        }
+    }
 
-	@Override
-	public final boolean contains(Object o) {
-		for(int i=0; i<size(); i++) {
-			final int slot = (int)((head.get() + i) & mask);
-			if(buffer[slot]!= null && buffer[slot].equals(o)) return true;
-		}
-		return false;
-	}
+    @Override
+    public final boolean contains(Object o) {
+        for(int i=0; i<size(); i++) {
+            final int slot = (int)((head.get() + i) & mask);
+            if(buffer[slot]!= null && buffer[slot].equals(o)) return true;
+        }
+        return false;
+    }
 
 }

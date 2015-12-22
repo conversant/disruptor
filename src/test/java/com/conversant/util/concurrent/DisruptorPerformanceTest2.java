@@ -15,21 +15,21 @@ import com.conversant.util.estimation.Percentile;
 public class DisruptorPerformanceTest2 {
 
     static final int QUEUE_SIZE = 64;
-	// increase this number for a legit performance test
-	static final int NRUN = 4*1*1024;
+    // increase this number for a legit performance test
+    static final int NRUN = 4*1*1024;
     static final int NTHREAD = 4;
 
-	private static final Integer INTVAL = 173;
-	private static final long[] pollPctTimes = new long[NRUN];
-	private static final long[] totPctTimes = new long[NRUN];
+    private static final Integer INTVAL = 173;
+    private static final long[] pollPctTimes = new long[NRUN];
+    private static final long[] totPctTimes = new long[NRUN];
 
-	private static final Integer[] firstN = new Integer[QUEUE_SIZE];
+    private static final Integer[] firstN = new Integer[QUEUE_SIZE];
 
-	static {
-		for(int i=0; i<QUEUE_SIZE; i++) {
-			firstN[i] = i;
-		}
-	}
+    static {
+        for(int i=0; i<QUEUE_SIZE; i++) {
+            firstN[i] = i;
+        }
+    }
 
     @Test
     public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
@@ -50,27 +50,27 @@ public class DisruptorPerformanceTest2 {
     }
 
     @Ignore
-	public static void testPerformance(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
-		for(int c=0; c<3; c++) {
-			System.gc();
-			runPerformance(rb);
-		}
-	}
+    public static void testPerformance(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+        for(int c=0; c<3; c++) {
+            System.gc();
+            runPerformance(rb);
+        }
+    }
 
-	@Ignore
-	public static void runPerformance(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+    @Ignore
+    public static void runPerformance(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
 
-		final long mask = QUEUE_SIZE-1;
+        final long mask = QUEUE_SIZE-1;
 
-		final Percentile offerPct = new Percentile();
-		final Percentile pollPct = new Percentile();
-		final Percentile totPct = new Percentile();
+        final Percentile offerPct = new Percentile();
+        final Percentile pollPct = new Percentile();
+        final Percentile totPct = new Percentile();
 
-		final Thread thread = new Thread(new Runnable() {
+        final Thread thread = new Thread(new Runnable() {
             private final long[] offerPctTimes = new long[NRUN];
 
-			@Override
-			public void run() {
+            @Override
+            public void run() {
                 try {
                     int i = NRUN;
                     do {
@@ -89,61 +89,61 @@ public class DisruptorPerformanceTest2 {
                     System.out.println("Interrupted, no data");
                 }
 
-			}
-		});
+            }
+        });
 
-		thread.start();
-		Integer result;
-		int i = NRUN;
+        thread.start();
+        Integer result;
+        int i = NRUN;
 
-		do {
-			final long startTime = System.nanoTime();
+        do {
+            final long startTime = System.nanoTime();
 
-			while ((result = rb.poll(50L, TimeUnit.MILLISECONDS)) == null) {
-				Thread.yield();
-			}
+            while ((result = rb.poll(50L, TimeUnit.MILLISECONDS)) == null) {
+                Thread.yield();
+            }
 
-			final int diff = (int) (System.nanoTime()>>10 & mask) - result.intValue();
+            final int diff = (int) (System.nanoTime()>>10 & mask) - result.intValue();
 
-			totPctTimes[i-1] = diff;
+            totPctTimes[i-1] = diff;
 
-			pollPctTimes[i-1] = System.nanoTime() - startTime;
-		} while (i-- > 1);
+            pollPctTimes[i-1] = System.nanoTime() - startTime;
+        } while (i-- > 1);
 
-		for(int d=0; d<pollPctTimes.length; d++) {
-			pollPct.add(pollPctTimes[d] / 1e3F);
-		}
+        for(int d=0; d<pollPctTimes.length; d++) {
+            pollPct.add(pollPctTimes[d] / 1e3F);
+        }
 
-		for(int d=0; d<totPctTimes.length; d++) {
-			if(totPctTimes[d] > 0) {
-				totPct.add(totPctTimes[d]);
-			}
-		}
+        for(int d=0; d<totPctTimes.length; d++) {
+            if(totPctTimes[d] > 0) {
+                totPct.add(totPctTimes[d]);
+            }
+        }
 
-		thread.join();
+        thread.join();
 
-		Percentile.print(System.out, "offer (us):", offerPct);
-		Percentile.print(System.out, "poll (us): ", pollPct);
-		Percentile.print(System.out, "tot (~us): ", totPct);
-	}
+        Percentile.print(System.out, "offer (us):", offerPct);
+        Percentile.print(System.out, "poll (us): ", pollPct);
+        Percentile.print(System.out, "tot (~us): ", totPct);
+    }
 
-	@Ignore
-	public static void testRate(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
-		for(int c=0; c<5; c++) {
-			System.gc();
-			runRate(rb);
-		}
-	}
+    @Ignore
+    public static void testRate(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+        for(int c=0; c<5; c++) {
+            System.gc();
+            runRate(rb);
+        }
+    }
 
-	@Ignore
-	public static void runRate(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
-		final int size = 1024;
+    @Ignore
+    public static void runRate(final BlockingQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+        final int size = 1024;
 
 
-		final Thread thread = new Thread(new Runnable() {
+        final Thread thread = new Thread(new Runnable() {
 
-			@Override
-			public void run() {
+            @Override
+            public void run() {
                 try {
                     int i = NRUN;
                     do {
@@ -154,26 +154,26 @@ public class DisruptorPerformanceTest2 {
                 } catch(InterruptedException ex) {
                     System.out.println("Interrupted no data");
                 }
-			}
-		});
+            }
+        });
 
 
-		final long startTime = System.nanoTime();
+        final long startTime = System.nanoTime();
 
-		thread.start();
-		Integer result;
-		int i = NRUN;
-		do {
-			while ((result = rb.poll(50L, TimeUnit.MILLISECONDS)) == null) {
-				Thread.yield();
-			}
+        thread.start();
+        Integer result;
+        int i = NRUN;
+        do {
+            while ((result = rb.poll(50L, TimeUnit.MILLISECONDS)) == null) {
+                Thread.yield();
+            }
 
-		} while (i-- != 0);
+        } while (i-- != 0);
 
-		thread.join();
-		final long runTime = System.nanoTime() - startTime;
-		System.out.println(Integer.toString(NRUN)+" in "+String.format("%3.1f ms", runTime/1e6)+": "+String.format("%d ns", runTime/NRUN));
-	}
+        thread.join();
+        final long runTime = System.nanoTime() - startTime;
+        System.out.println(Integer.toString(NRUN)+" in "+String.format("%3.1f ms", runTime/1e6)+": "+String.format("%d ns", runTime/NRUN));
+    }
 
 
     @Ignore
