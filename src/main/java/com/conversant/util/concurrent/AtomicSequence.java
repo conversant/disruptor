@@ -7,11 +7,11 @@ package com.conversant.util.concurrent;
  * change for a single thread.  All other threads, who fail to acquire permission
  * to update the sequence must obtain another sequence number and try again.
  *
- * If the call to update suceeds, the the caller must call commit to notify other
+ * If the call to update succeeds, the the caller must call commit to notify other
  * threads that they are finished modifying the sequence.  Otherwise deadlock will occur.
  *
  * Atomic means that only one change per sequence number is possible.  And that changes
- * to numerically lower numbers are garanteed to occur prior to changes to numerically higher
+ * to numerically lower numbers are guaranteed to occur prior to changes to numerically higher
  * sequence numbers.
  *
  * Unlike synchronization, this mechanism does not include a fence operation.    No thread state
