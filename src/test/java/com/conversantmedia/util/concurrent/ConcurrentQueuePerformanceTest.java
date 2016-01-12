@@ -1,9 +1,7 @@
 package com.conversantmedia.util.concurrent;
 
 import org.junit.Ignore;
-
 import com.conversantmedia.util.estimation.Percentile;
-
 
 /**
  * Created by jcairns on 5/29/14.

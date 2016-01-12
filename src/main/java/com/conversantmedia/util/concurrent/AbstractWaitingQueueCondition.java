@@ -15,7 +15,8 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
     // or notify needlessly - when nobody is waiting
 
     private static final int MAX_WAITERS = 8;
-    private static final int MASK_WAITERS = MAX_WAITERS-1;
+
+    private static final int WAITER_MASK = MAX_WAITERS-1;
 
     private static final long WAIT_TIME = PARK_TIMEOUT;
 
@@ -60,23 +61,23 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                         return;
                     } else {
                         // wait to become a waiter
-                        while(test() && !waiter.compareAndSet(waitSequence++ & MASK_WAITERS, null, t) && expires>timeNow) {
+                        while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && expires>timeNow) {
                             // too many threads are waiting?
-                            if((waitSequence & MASK_WAITERS) == MASK_WAITERS) {
+                            if((waitSequence & WAITER_MASK) == WAITER_MASK) {
                                 // stall after N tries because every waiting thread slot is already occupied
                                 LockSupport.parkNanos(WAIT_TIME*MAX_WAITERS);
                                 timeNow = System.nanoTime();
                             }
                         }
                         // are we a waiter?   wait until we are awakened
-                        while(test() && (waiter.get((waitSequence-1) & MASK_WAITERS) == t) && expires>timeNow && !t.isInterrupted()) {
+                        while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && expires>timeNow && !t.isInterrupted()) {
                             LockSupport.parkNanos((expires-timeNow)>>2);
                             timeNow = System.nanoTime();
                         }
 
                         if(t.isInterrupted()) {
                             // we are not waiting we are interrupted
-                            while(!waiter.compareAndSet((waitSequence-1) & MASK_WAITERS, t, null) && waiter.get(0) == t) {
+                            while(!waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null) && waiter.get(0) == t) {
                                 LockSupport.parkNanos(PARK_TIMEOUT);
                             }
 
@@ -120,21 +121,21 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                     } else {
 
                         // wait to become a waiter
-                        while(test() && !waiter.compareAndSet(waitSequence++ & MASK_WAITERS, null, t) && !t.isInterrupted()) {
-                            if((waitSequence & MASK_WAITERS) == MASK_WAITERS) {
+                        while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
+                            if((waitSequence & WAITER_MASK) == WAITER_MASK) {
                                 // stall after N tries because every waiting thread slot is already occupied
                                 LockSupport.parkNanos(MAX_WAITERS*WAIT_TIME);
                             }
                         }
 
                         // are we a waiter?   wait until we are awakened
-                        while(test() && (waiter.get((waitSequence-1) & MASK_WAITERS) == t) && !t.isInterrupted()) {
+                        while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && !t.isInterrupted()) {
                             LockSupport.park();
                         }
 
                         if(t.isInterrupted()) {
                             // we are not waiting we are interrupted
-                            while(!waiter.compareAndSet((waitSequence-1) & MASK_WAITERS, t, null) && waiter.get(0) == t) {
+                            while(!waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null) && waiter.get(0) == t) {
                                 LockSupport.parkNanos(PARK_TIMEOUT);
                             }
 
@@ -159,21 +160,21 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
             int waitSequence = 0;
             for(;;) {
                 Thread t;
-                while((t = waiter.get(waitSequence++ & MASK_WAITERS)) != null) {
-                    if(waiter.compareAndSet((waitSequence-1) & MASK_WAITERS, t, null)) {
+                while((t = waiter.get(waitSequence++ & WAITER_MASK)) != null) {
+                    if(waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null)) {
                         LockSupport.unpark(t);
                     } else {
                         LockSupport.parkNanos(PARK_TIMEOUT);
                     }
 
                     // go through all waiters once, or return if we are finished
-                    if(((waitSequence & MASK_WAITERS) == MASK_WAITERS) || (waitCache.value = waitCount.get()) == 0) {
+                    if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache.value = waitCount.get()) == 0) {
                         return;
                     }
                 }
 
                 // go through all waiters once, or return if we are finished
-                if(((waitSequence & MASK_WAITERS) == MASK_WAITERS) || (waitCache.value = waitCount.get()) == 0) {
+                if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache.value = waitCount.get()) == 0) {
                     return;
                 }
             }
