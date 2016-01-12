@@ -1,4 +1,4 @@
-<img src="https://github.com/conversant/disruptor/blob/master/src/main/resources/ConversantDisruptor.png?raw=true">
+<img src="https://github.com/conversant/disruptor/blob/master/src/main/resources/ConversantDisruptorLogo.png?raw=true">
 
 # Conversant ConcurrentQueue and Disruptor BlockingQueue
 
