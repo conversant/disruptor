@@ -14,8 +14,10 @@ Simply run the maven build to build and use the package.
 
 Maven users can incorporate Conversant Disruptor the usual way.
 
-```<dependency>
+```
+<dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
   <version>1.2.0</version>
-</dependency>```
+</dependency>
+```
