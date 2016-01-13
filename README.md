@@ -10,3 +10,12 @@ Simply run the maven build to build and use the package.
 
 ```$ mvn -U clean package```
 
+# Conversant Disruptor is now on Maven Central
+
+Maven users can incorporate Conversant Disruptor the usual way.
+
+```<dependency>
+  <groupId>com.conversantmedia</groupId>
+  <artifactId>disruptor</artifactId>
+  <version>1.2.0</version>
+</dependency>```
