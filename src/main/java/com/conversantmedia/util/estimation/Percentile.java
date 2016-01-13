@@ -97,8 +97,7 @@ public class Percentile {
     }
 
     /**
-     * return percentiles requested at initialization
-     * @return
+     * @return float[] - percentiles requested at initialization
      */
     public float[] getQuantiles() {
         return quantiles;
@@ -213,10 +212,10 @@ public class Percentile {
     /**
      * print a nice histogram of percentiles
      *
-     * @param out
-     * @param name
-     * @param p
-     * @throws Percentile.InsufficientSamplesException
+     * @param out - output stream
+     * @param name - data set name
+     * @param p - percentile
+     *
      */
 
     public static void print(final PrintStream out, final String name, final Percentile p) {

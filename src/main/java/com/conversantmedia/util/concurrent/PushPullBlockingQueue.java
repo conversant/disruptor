@@ -12,7 +12,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * Single thread implementation of disruptor
  *
- * @author John Cairns <jcairns@dotomi.com> Date: 4/25/12 Time: 12:00 PM
+ * @author John Cairns {@literal <john@2ad.com>} Date: 4/25/12 Time: 12:00 PM
  */
 public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> implements Serializable, Iterable<E>, Collection<E>, BlockingQueue<E>, Queue<E>, ConcurrentQueue<E> {
 
@@ -25,8 +25,9 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     protected final QueueCondition queueNotEmptyCondition;
 
     /**
+     * <p>
      * Construct a blocking queue of the given fixed capacity.
-     * <p/>
+     * </p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
      *
@@ -38,9 +39,9 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     }
 
     /**
+     * <p>
      * Construct a blocking queue with a given fixed capacity
-     *
-     * <p/>
+     * </p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
      *
@@ -52,8 +53,8 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
      * configured with far too many threads to show very high load averages.   This is probably
      * not as detrimental as it is annoying.
      *
-     * @param capacity
-     * @param useWaitingLocking
+     * @param capacity - the queue capacity, power of two is suggested
+     * @param useWaitingLocking - set to false to disable experimental locking
      */
     public PushPullBlockingQueue(final int capacity, final boolean useWaitingLocking) {
         super(capacity);
@@ -68,11 +69,12 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     }
 
     /**
+     * <p>
      * Construct a blocking queue of the given fixed capacity
-     * <p/>
+     * </p><p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
-     * <p/>
+     * </p>
      * The values from the collection, c, are appended to the
      * queue in iteration order.     If the number of elements
      * in the collection exceeds the actual capacity, then the
@@ -334,11 +336,11 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     /**
      * Wait for timeout on condition
      *
-     * @param timeout
-     * @param unit
-     * @param condition
-     * @return
-     * @throws InterruptedException
+     * @param timeout - the amount of time in units to wait
+     * @param unit - The time unit
+     * @param condition - the condition to wait for
+     * @return boolean - true if status was signaled prior to timeout
+     * @throws InterruptedException - on interrupt
      */
     protected final boolean waitStatus(final long timeout, final TimeUnit unit, final QueueCondition condition) throws InterruptedException {
         // until condition is signaled

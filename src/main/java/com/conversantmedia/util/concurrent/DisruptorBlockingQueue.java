@@ -62,7 +62,7 @@ import java.util.concurrent.locks.LockSupport;
  * however efforts have been made to deal with that case here.   As always,
  * one should test their intended strategy.
  *
- * @author John Cairns <jcairns@dotomi.com> Date: 4/25/12 Time: 12:00 PM
+ * @author John Cairns {@literal <john@2ad.com>} Date: 4/25/12 Time: 12:00 PM
  */
 public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<E> implements Serializable, Iterable<E>, Collection<E>, BlockingQueue<E>, Queue<E>, ConcurrentQueue<E> {
 
@@ -75,8 +75,9 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     protected final QueueCondition queueNotEmptyCondition;
 
     /**
+     * <p>
      * Construct a blocking queue of the given fixed capacity.
-     * <p/>
+     * </p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
      *
@@ -90,9 +91,9 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     }
 
     /**
+     * <p>
      * Construct a blocking queue with a given fixed capacity
-     *
-     * <p/>
+     * </p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
      *
@@ -104,8 +105,8 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
      * configured with far too many threads to show very high load averages.   This is probably
      * not as detrimental as it is annoying.
      *
-     * @param capacity
-     * @param useWaitingLocking
+     * @param capacity - the queue capacity, suggest using a power of 2
+     * @param useWaitingLocking - experimental locking is disabled if set to false
      */
     public DisruptorBlockingQueue(final int capacity, final boolean useWaitingLocking) {
         super(capacity);
@@ -120,11 +121,12 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     }
 
     /**
+     * <p>
      * Construct a blocking queue of the given fixed capacity
-     * <p/>
+     * </p><p>
      * Note: actual capacity will be the next power of two
      * larger than capacity.
-     * <p/>
+     * </p>
      * The values from the collection, c, are appended to the
      * queue in iteration order.     If the number of elements
      * in the collection exceeds the actual capacity, then the
@@ -300,8 +302,9 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     }
 
     /**
+     * <p>
      * Provided for compatibility with the BlockingQueue interface only.
-     * <p/>
+     * </p>
      * This interface has been fixed to be properly concurrent, but will
      * block the entire queue, it should not be used!
      */
@@ -444,11 +447,11 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     /**
      * Wait for timeout on condition
      *
-     * @param timeout
-     * @param unit
-     * @param condition
-     * @return
-     * @throws InterruptedException
+     * @param timeout - the amount of time in units to wait
+     * @param unit - the time unit
+     * @param condition - condition to wait for
+     * @return boolean - true if status was detected
+     * @throws InterruptedException - on interrupt
      */
     protected final boolean waitStatus(final long timeout, final TimeUnit unit, final QueueCondition condition) throws InterruptedException {
         // until condition is signaled

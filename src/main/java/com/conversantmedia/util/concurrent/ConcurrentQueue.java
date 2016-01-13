@@ -9,7 +9,9 @@ public interface ConcurrentQueue<E> {
 
     /**
      * Add element t to the ring
-     * @param e
+     * @param e - element to offer
+     * 
+     * @return boolean - true if the operation succeeded
      */
     boolean offer(E e);
 
@@ -23,27 +25,29 @@ public interface ConcurrentQueue<E> {
     /**
      * return the first element in the queue
      *
-     * @return T
+     * @return E - The element
      */
     E peek();
 
     /**
-     * return the number of elements in the queue
+     * @return int - the number of elements in the queue
      */
     int size();
 
     /**
-     * return the capacity of the queue
+     * @return int - the capacity of the queue
      */
     int capacity();
 
     /**
-     * return true if the queue is currently empty
+     * @return boolean - true if the queue is currently empty
      */
     boolean isEmpty();
 
     /**
-     * return true if specified object is contained in the queue
+     * @param o - the object to test
+     *
+     * @return boolean - true if specified object is contained in the queue
      */
     boolean contains(Object o);
 
@@ -51,7 +55,7 @@ public interface ConcurrentQueue<E> {
      * return all elements in the queue to the provided array, up to the size of the provided
      * array.
      *
-     * @param e
+     * @param e - The element array
      *
      * @return int - the number of elements added to t
      */

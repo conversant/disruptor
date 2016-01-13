@@ -20,13 +20,12 @@ package com.conversantmedia.util.concurrent;
  *
  * Its possible for the sequence to flip negative, over hundreds of years or with incredibly fast hardware
  * this would have no impact on the correctness of the atomic sequence.   However, the best practice for code of this nature is
- * to make only relative comparison,   sequence1 - sequence2 > 0, rather than sequence1 > sequence2
+ * to make only relative comparison,   sequence1 - sequence2 {@literal >} 0, rather than sequence1 {@literal >} sequence2
  *
  *
  * The general strategy is as follows:
  *
- * <pre>
- * {@code
+ * <pre><code>
  * for(;;) {
  *     long lock = sequence.get();
  *     // any preliminary checking (capacity, etc. can be done here
@@ -40,8 +39,8 @@ package com.conversantmedia.util.concurrent;
  *              sequence.commit();
  *          }
  *     }
- *     }
- *     </pre>
+ * }
+ * </code></pre>
  *
  *
  * Created by jcairns on 9/24/14.
@@ -65,6 +64,8 @@ public final class AtomicSequence {
 
     /**
      * force a fenced read of the sequence, only required if the sequence is known out of date
+     *
+     * @return long - sequence number
      */
     public long getAtomic() {
         return sequenceCache.value = sequence.get();
@@ -72,7 +73,7 @@ public final class AtomicSequence {
 
     /**
      *
-     * @param sequence
+     * @param sequence - input sequence number
      * @return boolean - true if its safe to write the transaction for the given sequence
      */
     public boolean update(final long sequence) {
