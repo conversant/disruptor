@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Concurrent "lock-free" version of a stack.
  *
- * @author John Cairns <jcairns@dotomi.com> Date: 7/9/12 Time: 8:53 AM
+ * @author John Cairns
+ * <p>Date: 7/9/12</p>
  */
 public class ConcurrentStack<N> implements Stack<N> {
 
@@ -23,6 +24,8 @@ public class ConcurrentStack<N> implements Stack<N> {
 
 	/**
 	 *	 construct a new stack of given capacity
+	 *
+	 *	 @param size - the stack size
 	 */
 	public ConcurrentStack(final int size) {
 		int stackSize = 1;

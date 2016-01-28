@@ -5,11 +5,11 @@
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.1-SNAPSHOT</version>
+  <version>1.2.2-SNAPSHOT</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://github.com/conversant/disruptor</url>
   <description>Conversant Disruptor - very low latency Java
-  BlockingQueue and thread transfer mechanism.</description>
+  BlockingQueue</description>
   
   <inceptionYear>2012</inceptionYear>
   
