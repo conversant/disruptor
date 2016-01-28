@@ -1,0 +1,25 @@
+# Maven #
+#########
+target/
+
+# Intellij #
+############
+*.iml
+*.iws
+.idea/
+
+# Eclipse #
+###########
+.classpath
+.project
+.settings/
+
+# Netbeans #
+############
+nbactions.xml
+nb-configuration.xml
+
+# Python #
+##########
+env
+
