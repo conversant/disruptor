@@ -1,11 +1,14 @@
 package com.conversantmedia.util.concurrent;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -33,12 +36,12 @@ public class ConcurrentStackTest {
     }
 
     @Test
-    public void add_Pop() throws Exception {
+    public void pushPopTest() throws Exception {
         final ConcurrentStack<Integer> stack = new ConcurrentStack<>(10);
 
-        stack.add(1);
-        stack.add(2);
-        stack.add(3);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3);
 
         assertEquals(Integer.valueOf(3), stack.pop());
         assertEquals(Integer.valueOf(2), stack.pop());
@@ -47,7 +50,7 @@ public class ConcurrentStackTest {
     }
 
     @Test(timeout = 10000)
-    public void multithreaded_Add_Pop() throws Exception {
+    public void multithreadPushPop() throws Exception {
         final ConcurrentStack<Integer> stack = new ConcurrentStack<>(10);
 
         final AtomicInteger addCount = new AtomicInteger(0);
@@ -60,7 +63,7 @@ public class ConcurrentStackTest {
                     popCount.incrementAndGet();
                 }
             });
-            executor.execute(() -> stack.add(1));
+            executor.execute(() -> stack.push(1));
         }
 
         while (popCount.get() < addCount.get()) {
@@ -95,6 +98,115 @@ public class ConcurrentStackTest {
 
         while(nFound.get() < 1024) Thread.yield();
         assertEquals(1024, nFound.get());
+    }
+
+
+    @Test(timeout=1000L)
+    public void timedPushTest() throws InterruptedException {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+
+        for(int i=0; i<128; i++) {
+            iStack.push(i);
+        }
+
+        Assert.assertFalse(iStack.push(129, 10L, TimeUnit.MICROSECONDS));
+    }
+
+    @Test
+    public void pushInterruptably() throws InterruptedException {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+        final AtomicBoolean expectInterrupt = new AtomicBoolean(false);
+
+        for(int i=0; i<128; i++) {
+            iStack.pushInterruptibly(i);
+        }
+
+        final Thread t = new Thread(() -> {
+            try {
+                Thread.currentThread().interrupt();
+                iStack.pushInterruptibly(129);
+            } catch (InterruptedException e) {
+                expectInterrupt.set(true);
+            }
+        });
+
+
+        t.start();
+        t.join();
+
+        Assert.assertEquals(true, expectInterrupt.get());
+
+    }
+
+    @Test
+    public void containsTest() {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+
+        for(int i=0; i<128; i++) {
+            iStack.push(i);
+        }
+
+        for(int i=0; i<128; i++) {
+            Assert.assertTrue(iStack.contains(i));
+        }
+
+    }
+
+    @Test
+    public void pushOverflowTest() {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+
+        for(int i=0; i<128; i++) {
+            iStack.push(i);
+        }
+
+        Assert.assertFalse(iStack.push(129));
+    }
+
+    @Test
+    public void peekTest() {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+        for(int i=0; i<128; i++) {
+            iStack.push(i);
+            Assert.assertEquals(Integer.valueOf(i), iStack.peek());
+            iStack.pop();
+        }
+    }
+
+    @Test
+    public void popNullTest() {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+        Assert.assertNull(iStack.pop());
+    }
+
+    @Test(timeout=1000L)
+    public void timedPopNullTest() throws InterruptedException {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+        Assert.assertNull(iStack.pop(10L, TimeUnit.MICROSECONDS));
+    }
+
+
+    @Test
+    public void popInterruptably() throws InterruptedException {
+        final ConcurrentStack<Integer> iStack = new ConcurrentStack<>(128);
+        final AtomicBoolean expectInterrupt = new AtomicBoolean(false);
+
+
+
+        final Thread t = new Thread(() -> {
+            try {
+                Thread.currentThread().interrupt();
+                iStack.popInterruptibly();
+            } catch (InterruptedException e) {
+                expectInterrupt.set(true);
+            }
+        });
+
+
+        t.start();
+        t.join();
+
+        Assert.assertEquals(true, expectInterrupt.get());
     }
 
 }

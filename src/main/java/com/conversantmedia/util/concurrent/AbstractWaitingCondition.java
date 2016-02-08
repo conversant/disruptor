@@ -28,7 +28,7 @@ import java.util.concurrent.locks.LockSupport;
  * Created by jcairns on 12/11/14.
  */
 // abstract condition supporting common condition code
-abstract class AbstractWaitingQueueCondition implements QueueCondition {
+abstract class AbstractWaitingCondition implements Condition {
 
 
     // keep track of whos waiting so we don't have to synchronize
@@ -52,6 +52,7 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
     @Override
     public void awaitNanos(long timeout) throws InterruptedException {
         for (;;) {
+
             try {
                 final int waitCount = this.waitCount.get();
                 int waitSequence = waitCount;
@@ -60,17 +61,16 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                     waitCache.value = waitCount+1;
 
                     long timeNow = System.nanoTime();
-                    long expires = timeNow+timeout;
+                    final long expires = timeNow+timeout;
 
                     final Thread t = Thread.currentThread();
 
                     if(waitCount == 0) {
                         // first thread spins
+
+                        int spin = 0;
                         while(test() && expires>timeNow && !t.isInterrupted()) {
-                            while(test() && expires>timeNow && !t.isInterrupted()) {
-                                timeNow += 5L;
-                            }
-                            Thread.yield();
+                            spin = Condition.progressiveYield(spin);
                             timeNow = System.nanoTime();
                         }
 
@@ -81,11 +81,12 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                         return;
                     } else {
                         // wait to become a waiter
+                        int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && expires>timeNow) {
                             // too many threads are waiting?
                             if((waitSequence & WAITER_MASK) == WAITER_MASK) {
                                 // stall after N tries because every waiting thread slot is already occupied
-                                LockSupport.parkNanos(WAIT_TIME*MAX_WAITERS);
+                                spin = Condition.progressiveYield(spin);
                                 timeNow = System.nanoTime();
                             }
                         }
@@ -118,6 +119,7 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
     @Override
     public void await() throws InterruptedException {
         for(;;) {
+
             try {
                 final int waitCount = this.waitCount.get();
                 int waitSequence = waitCount;
@@ -128,9 +130,10 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                     final Thread t = Thread.currentThread();
 
                     if(waitCount == 0) {
+                        int spin = 0;
                         // first thread spinning
                         while(test() && !t.isInterrupted()) {
-                            LockSupport.parkNanos(PARK_TIMEOUT);
+                            spin = Condition.progressiveYield(spin);
                         }
 
                         if(t.isInterrupted()) {
@@ -141,10 +144,10 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                     } else {
 
                         // wait to become a waiter
+                        int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
                             if((waitSequence & WAITER_MASK) == WAITER_MASK) {
-                                // stall after N tries because every waiting thread slot is already occupied
-                                LockSupport.parkNanos(MAX_WAITERS*WAIT_TIME);
+                                spin = Condition.progressiveYield(spin);
                             }
                         }
 
@@ -156,7 +159,7 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                         if(t.isInterrupted()) {
                             // we are not waiting we are interrupted
                             while(!waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null) && waiter.get(0) == t) {
-                                LockSupport.parkNanos(PARK_TIMEOUT);
+                                LockSupport.parkNanos(WAIT_TIME);
                             }
 
                             throw new InterruptedException();
@@ -184,7 +187,7 @@ abstract class AbstractWaitingQueueCondition implements QueueCondition {
                     if(waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null)) {
                         LockSupport.unpark(t);
                     } else {
-                        LockSupport.parkNanos(PARK_TIMEOUT);
+                        LockSupport.parkNanos(WAIT_TIME);
                     }
 
                     // go through all waiters once, or return if we are finished

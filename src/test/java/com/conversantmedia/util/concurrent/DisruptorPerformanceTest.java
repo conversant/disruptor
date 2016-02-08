@@ -41,7 +41,7 @@ public class DisruptorPerformanceTest {
     private static final Logger LOG = LoggerFactory.getLogger(DisruptorPerformanceTest.class);
     private static final int MAXCAP = 1024;
     // increase this number for a better performance test
-    private static final int NFEED = 1*MAXCAP;
+    private static final int NFEED = 4*1*MAXCAP;
 
     @Ignore
     public  synchronized void testArrayOneXOne() throws InterruptedException {
@@ -55,7 +55,7 @@ public class DisruptorPerformanceTest {
 
     @Test
     public synchronized  void testDisruptorOneXOne() throws InterruptedException {
-        final BlockingQueue<Integer> queue = new DisruptorBlockingQueue<Integer>(MAXCAP, true);
+        final BlockingQueue<Integer> queue = new DisruptorBlockingQueue<Integer>(MAXCAP);
 
         for(int i=0; i<3; i++) {
             LOG.info("Disruptor 1x1 Poll");
@@ -88,7 +88,7 @@ public class DisruptorPerformanceTest {
 
     @Test
     public synchronized  void testDisruptorFourXFour() throws InterruptedException {
-        final DisruptorBlockingQueue<Integer> queue = new DisruptorBlockingQueue<Integer>(MAXCAP, true);
+        final DisruptorBlockingQueue<Integer> queue = new DisruptorBlockingQueue<Integer>(MAXCAP);
 
         for(int i=0; i<3; i++) {
             LOG.info("Disruptor 4x4 Poll");

@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * Single thread implementation of disruptor
@@ -41,8 +40,8 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     // if MultithreadConcurrentQueue is used directly, these calls are
     // optimized out and have no impact on timing values
     //
-    protected final QueueCondition queueNotFullCondition;
-    protected final QueueCondition queueNotEmptyCondition;
+    protected final Condition queueNotFullCondition;
+    protected final Condition queueNotEmptyCondition;
 
     /**
      * <p>
@@ -55,7 +54,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
      */
 
     public PushPullBlockingQueue(final int capacity) {
-        this(capacity, true);
+        this(capacity, SpinPolicy.WAITING);
     }
 
     /**
@@ -74,17 +73,24 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
      * not as detrimental as it is annoying.
      *
      * @param capacity - the queue capacity, power of two is suggested
-     * @param useWaitingLocking - set to false to disable experimental locking
+     * @param spinPolicy - determine the level of cpu aggressiveness in waiting
      */
-    public PushPullBlockingQueue(final int capacity, final boolean useWaitingLocking) {
+    public PushPullBlockingQueue(final int capacity, final SpinPolicy spinPolicy) {
         super(capacity);
 
-        if(useWaitingLocking) {
-            queueNotFullCondition = new WaitingQueueNotFull();
-            queueNotEmptyCondition = new WaitingQueueNotEmpty();
-        } else {
-            queueNotFullCondition = new QueueNotFull();
-            queueNotEmptyCondition = new QueueNotEmpty();
+        switch(spinPolicy) {
+            case BLOCKING:
+                queueNotFullCondition = new QueueNotFull();
+                queueNotEmptyCondition = new QueueNotEmpty();
+                break;
+            case SPINNING:
+                queueNotFullCondition = new SpinningQueueNotFull();
+                queueNotEmptyCondition = new SpinningQueueNotEmpty();
+                break;
+            case WAITING:
+            default:
+                queueNotFullCondition = new WaitingQueueNotFull();
+                queueNotEmptyCondition = new WaitingQueueNotEmpty();
         }
     }
 
@@ -158,7 +164,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            LockSupport.parkNanos(QueueCondition.PARK_TIMEOUT);
+            Condition.waitStatus(queueNotFullCondition);
         }
     }
 
@@ -170,7 +176,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             } else {
 
                 // wait for available capacity and try again
-                if (!waitStatus(timeout, unit, queueNotFullCondition)) return false;
+                if (!Condition.waitStatus(timeout, unit, queueNotFullCondition)) return false;
             }
         }
     }
@@ -185,7 +191,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            LockSupport.parkNanos(QueueCondition.PARK_TIMEOUT);
+            Condition.waitStatus(queueNotEmptyCondition);
         }
     }
 
@@ -197,7 +203,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
                 return pollObj;
             } else {
                 // wait for the queue to have at least one element or time out
-                if(!waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
+                if(!Condition.waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
             }
         }
     }
@@ -324,6 +330,10 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
         return new RingIter();
     }
 
+    private final boolean isFull() {
+        final long queueStart = tail.get() - size;
+        return ((headCache.value == queueStart) || (headCache.value = head.get()) == queueStart);
+    }
 
     private final class RingIter implements Iterator<E> {
         int dx = 0;
@@ -353,71 +363,62 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
         }
     }
 
-    /**
-     * Wait for timeout on condition
-     *
-     * @param timeout - the amount of time in units to wait
-     * @param unit - The time unit
-     * @param condition - the condition to wait for
-     * @return boolean - true if status was signaled prior to timeout
-     * @throws InterruptedException - on interrupt
-     */
-    protected final boolean waitStatus(final long timeout, final TimeUnit unit, final QueueCondition condition) throws InterruptedException {
-        // until condition is signaled
-
-        final long timeoutNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-        final long expireTime = System.nanoTime() + timeoutNanos;
-        // the queue is empty or full wait for something to change
-        while (condition.test()) {
-            if (System.nanoTime() > expireTime) {
-                return false;
-            }
-
-            condition.awaitNanos(timeoutNanos);
-
-        }
-
-        return true;
-    }
-
     // condition used for signaling queue is full
-    private final class QueueNotFull extends AbstractQueueCondition {
+    private final class QueueNotFull extends AbstractCondition {
 
         @Override
         // @return boolean - true if the queue is full
         public final boolean test() {
-            final long queueStart = tail.get() - size;
-            return ((headCache.value == queueStart) || (headCache.value = head.get()) == queueStart);
+            return isFull();
         }
     }
 
     // condition used for signaling queue is empty
-    private final class QueueNotEmpty extends AbstractQueueCondition {
+    private final class QueueNotEmpty extends AbstractCondition {
         @Override
         // @return boolean - true if the queue is empty
         public final boolean test() {
-            return tail.get() == head.get();
+            return isEmpty();
         }
     }
 
     // condition used for signaling queue is full
-    private final class WaitingQueueNotFull extends AbstractWaitingQueueCondition {
+    private final class WaitingQueueNotFull extends AbstractWaitingCondition {
 
         @Override
         // @return boolean - true if the queue is full
         public final boolean test() {
-            final long queueStart = tail.get() - size;
-            return ((headCache.value == queueStart) || (headCache.value = head.get()) == queueStart);
+            return isFull();
         }
     }
 
     // condition used for signaling queue is empty
-    private final class WaitingQueueNotEmpty extends AbstractWaitingQueueCondition {
+    private final class WaitingQueueNotEmpty extends AbstractWaitingCondition {
         @Override
         // @return boolean - true if the queue is empty
         public final boolean test() {
-            return tail.get() == head.get();
+            return isEmpty();
         }
     }
+
+    // condition used for signaling queue is full
+    private final class SpinningQueueNotFull extends AbstractSpinningCondition {
+
+        @Override
+        // @return boolean - true if the queue is full
+        public final boolean test() {
+            return isFull();
+        }
+    }
+
+    // condition used for signaling queue is empty
+    private final class SpinningQueueNotEmpty extends AbstractSpinningCondition {
+        @Override
+        // @return boolean - true if the queue is empty
+        public final boolean test() {
+            return isEmpty();
+        }
+    }
+
 
 }

@@ -20,9 +20,9 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import com.conversantmedia.util.collection.Stack;
-
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Concurrent "lock-free" version of a stack.
@@ -30,47 +30,83 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author John Cairns
  * <p>Date: 7/9/12</p>
  */
-public class ConcurrentStack<N> implements Stack<N> {
+public class ConcurrentStack<N> implements BlockingStack<N> {
 
     private final int size;
 
-    private final N[]  stack;
+    private final AtomicReferenceArray<N> stack;
 
     // representing the top of the stack
     private final AtomicInteger stackTop = new PaddedAtomicInteger(0);
-    // and its cursor - to ensure exclusive access
-    private final AtomicInteger stackCursor = new PaddedAtomicInteger(0);
+
+    private final SequenceLock  seqLock = new SequenceLock();
+
+    private final Condition stackNotFullCondition;
+    private final Condition stackNotEmptyCondition;
+
+    public ConcurrentStack(final int size) {
+        this(size, SpinPolicy.WAITING);
+    }
 
     /**
      *   construct a new stack of given capacity
      *
-     *   @param size - the stack size
+     *  @param size - the stack size
+     *  @param spinPolicy - determine the level of cpu aggressiveness in waiting
      */
-    public ConcurrentStack(final int size) {
+    public ConcurrentStack(final int size, final SpinPolicy spinPolicy) {
         int stackSize = 1;
         while(stackSize < size) stackSize <<=1;
         this.size = stackSize;
-        stack = (N[])new Object[stackSize];
+        stack = new AtomicReferenceArray<N>(stackSize);
+
+        switch(spinPolicy) {
+            case BLOCKING:
+                stackNotFullCondition = new StackNotFull();
+                stackNotEmptyCondition = new StackNotEmpty();
+                break;
+            case SPINNING:
+                stackNotFullCondition = new SpinningStackNotFull();
+                stackNotEmptyCondition = new SpinningStackNotEmpty();
+                break;
+            case WAITING:
+            default:
+                stackNotFullCondition = new WaitingStackNotFull();
+                stackNotEmptyCondition = new WaitingStackNotEmpty();
+        }
     }
 
-    /**
-     *  add a node to the stack, blocking if necessary until space is
-     *  available
-     *
-     * @param n
-     */
+
     @Override
-    public void push(final N n) {
-        while(!add(n)) {
-            Thread.yield();
+    public boolean push(final N n, final long time, final TimeUnit unit) throws InterruptedException {
+        final long endDate = System.nanoTime() + unit.toNanos(time);
+        while(!push(n)) {
+            if(endDate - System.nanoTime() < 0) {
+                return false;
+            }
+
+            Condition.waitStatus(time, unit, stackNotFullCondition);
         }
+        stackNotEmptyCondition.signal();
+        return true;
+    }
+
+    @Override
+    public void pushInterruptibly(final N n) throws InterruptedException {
+        while(!push(n)) {
+            if(Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+            Condition.waitStatus(stackNotFullCondition);
+        }
+        stackNotEmptyCondition.signal();
     }
 
     @Override
     public boolean contains(final N n) {
         if(n != null) {
             for(int i = 0; i<stackTop.get(); i++) {
-                if(n.equals(stack[i])) return true;
+                if(n.equals(stack.get(i))) return true;
             }
         }
         return false;
@@ -84,25 +120,31 @@ public class ConcurrentStack<N> implements Stack<N> {
      * @return boolean - false if stack overflow, true otherwise
      */
     @Override
-    public boolean add(final N n) {
+    public boolean push(final N n) {
+        int spin = 0;
         for(;;) {
-            final int stackTop = this.stackTop.get();
-            if (size > stackTop) {
-                final int nextTop = stackTop+1;
-                if(stackCursor.compareAndSet(stackTop, nextTop)) {
-                    // this value of stackTop is a constant because we have just locked out changes
-                    try {
-                        // sequence is still as we expect, not modified elsewhere
-                        stack[stackTop] = n;
-                        return true;
-                    } finally {
-                        this.stackTop.lazySet(nextTop);
+
+            final long writeLock = seqLock.tryWriteLock();
+            if(writeLock>0L) {
+                try {
+                    final int stackTop = this.stackTop.get();
+                    if(size>stackTop) {
+                        try {
+                            stack.set(stackTop, n);
+                            stackNotEmptyCondition.signal();
+                            return true;
+                        } finally {
+                            this.stackTop.lazySet(stackTop+1);
+                        }
+                    } else {
+                        return false;
                     }
+                } finally {
+                    seqLock.unlock(writeLock);
                 }
-            } else {
-                return false;
+
             }
-            Thread.yield();
+	        spin = Condition.progressiveYield(spin);
         }
     }
 
@@ -114,11 +156,21 @@ public class ConcurrentStack<N> implements Stack<N> {
     @Override
     public N peek() {
         // read the current cursor
-        final int stackTop = this.stackTop.get();
-        if(stackTop > 0) {
-            return stack[stackTop-1];
-        } else {
-            return null;
+        int spin = 0;
+        for(;;) {
+
+            final long readLock = seqLock.readLock();
+            final int stackTop = this.stackTop.get();
+            final N  n = stack.get(stackTop-1);
+            if(seqLock.readLockHeld(readLock)) {
+                if(stackTop>0) {
+                    return stack.get(stackTop-1);
+                } else {
+                    return null;
+                }
+            }
+
+            spin = Condition.progressiveYield(spin);
         }
     }
 
@@ -129,26 +181,67 @@ public class ConcurrentStack<N> implements Stack<N> {
     @Override
     public N pop() {
 
+        int spin = 0;
         // now pop the stack
         for(;;) {
-            final int stackTop = this.stackTop.get();
-            if(stackTop > 0) {
-                final int lastRef = stackTop - 1;
-                if(stackCursor.compareAndSet(stackTop, lastRef)) {
-                    try {
-                        // if we can modify the stack - i.e. nobody else is modifying
-                        final N n = stack[lastRef];
-                        stack[lastRef] = null;
-                        return n;
-                    } finally {
-                        this.stackTop.lazySet(lastRef);
+            final long writeLock = seqLock.tryWriteLock();
+            if(writeLock > 0) {
+                try {
+                    final int stackTop = this.stackTop.get();
+                    final int lastRef = stackTop-1;
+                    if(stackTop>0) {
+                        try {
+                            // if we can modify the stack - i.e. nobody else is modifying
+                            final N n = stack.get(lastRef);
+                            stack.set(lastRef, null);
+                            stackNotFullCondition.signal();
+                            return n;
+                        } finally {
+                            this.stackTop.lazySet(lastRef);
+                        }
+                    } else {
+                        return null;
                     }
+                } finally {
+                    seqLock.unlock(writeLock);
                 }
-            } else {
-                return null;
             }
 
-            Thread.yield();
+            spin = Condition.progressiveYield(spin);
+
+        }
+    }
+
+    @Override
+    public N pop(final long time, final TimeUnit unit) throws InterruptedException {
+        final long endTime = System.nanoTime() + unit.toNanos(time);
+        for(;;) {
+            final N n = pop();
+            if(n != null) {
+                stackNotFullCondition.signal();
+                return n;
+            } else {
+                if(endTime - System.nanoTime() < 0) {
+                    return null;
+                }
+            }
+            Condition.waitStatus(time, unit, stackNotEmptyCondition);
+        }
+    }
+
+    @Override
+    public N popInterruptibly() throws InterruptedException {
+        for(;;) {
+            final N n = pop();
+            if(n != null) {
+                stackNotFullCondition.signal();
+                return n;
+            } else {
+                if(Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException();
+                }
+            }
+            Condition.waitStatus(stackNotEmptyCondition);
         }
     }
 
@@ -165,7 +258,7 @@ public class ConcurrentStack<N> implements Stack<N> {
      * how much available space in the stack
      */
     @Override
-        public int remainingCapacity() {
+    public int remainingCapacity() {
         return size - stackTop.get();
     }
 
@@ -182,29 +275,90 @@ public class ConcurrentStack<N> implements Stack<N> {
      */
     @Override
     public void clear() {
+        int spin = 0;
         for(;;) {
-            final int stackTop = this.stackTop.get();
-            if(stackTop > 0) {
-                if(stackCursor.compareAndSet(stackTop, 0)) {
+            final long writeLock = seqLock.tryWriteLock();
+            if(writeLock > 0L) {
+                final int stackTop = this.stackTop.get();
+                if(stackTop>0) {
                     try {
                         for(int i = 0; i<stackTop; i++) {
-                            stack[i] = null;
+                            stack.set(i, null);
                         }
+                        stackNotFullCondition.signal();
                         return;
                     } finally {
                         this.stackTop.lazySet(0);
                     }
+                } else {
+                    return;
                 }
-            } else {
-                return;
             }
-            Thread.yield();
+
+            spin = Condition.progressiveYield(spin);
         }
     }
 
-    public final static class OverflowException extends Exception {
-        private OverflowException() {
-            super();
+    private final boolean isFull() {
+        return size == stackTop.get();
+    }
+
+
+    // condition used for signaling queue is full
+    private final class WaitingStackNotFull extends AbstractWaitingCondition {
+
+        @Override
+        // @return boolean - true if the queue is full
+        public final boolean test() {
+            return isFull();
         }
     }
+
+    // condition used for signaling queue is empty
+    private final class WaitingStackNotEmpty extends AbstractWaitingCondition {
+        @Override
+        // @return boolean - true if the queue is empty
+        public final boolean test() {
+            return isEmpty();
+        }
+    }
+
+    // condition used for signaling queue is full
+    private final class SpinningStackNotFull extends AbstractSpinningCondition {
+
+        @Override
+        // @return boolean - true if the queue is full
+        public final boolean test() {
+            return isFull();
+        }
+    }
+
+    // condition used for signaling queue is empty
+    private final class SpinningStackNotEmpty extends AbstractSpinningCondition {
+        @Override
+        // @return boolean - true if the queue is empty
+        public final boolean test() {
+            return isEmpty();
+        }
+    }
+
+    // condition used for signaling queue is full
+    private final class StackNotFull extends AbstractCondition {
+
+        @Override
+        // @return boolean - true if the queue is full
+        public final boolean test() {
+            return isFull();
+        }
+    }
+
+    // condition used for signaling queue is empty
+    private final class StackNotEmpty extends AbstractCondition {
+        @Override
+        // @return boolean - true if the queue is empty
+        public final boolean test() {
+            return isEmpty();
+        }
+    }
+
 }

@@ -54,19 +54,19 @@ public class DisruptorPerformanceTest2 {
     @Test
     public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
         System.out.println("1x1 using MultiThread");
-        testPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE, true));
+        testPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
 
     @Test
     public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
-        testRate(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE, true));
+        testRate(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
     @Test
     public void testNThreadPerformance() throws Percentile.InsufficientSamplesException, InterruptedException {
         System.out.println("NThread in MultiThread");
-        testNThreadPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE, true));
+        testNThreadPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
     @Ignore

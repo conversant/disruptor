@@ -26,23 +26,22 @@ package com.conversantmedia.util.collection;
 public interface Stack<N> {
 
 
+    /**
+     * Linear search the stack for contains - not an efficient operation
+     *
+     * @param n
+     * @return boolean - true if n is contained somewhere in the stack
+     */
     boolean contains(N n);
 
     /**
      * Add the element to the stack top, optionally failing if there is
-     * no capacity
+     * no capacity (overflow)
      *
      * @param n
      * @return
      */
-    boolean add(N n);
-
-    /**
-     * push the next element on the stack top - waiting if needed for space to become available
-     *
-     * @param n
-     */
-    void push(N n);
+    boolean push(N n);
 
     /**
      * show the current stack top

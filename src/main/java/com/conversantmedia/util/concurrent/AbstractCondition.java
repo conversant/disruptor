@@ -20,24 +20,53 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-/*
- * Return true once a condition is satisfied
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
  * Created by jcairns on 12/11/14.
  */
-interface QueueCondition {
 
-    long PARK_TIMEOUT = 50L;
+// use java sync to signal
+abstract class AbstractCondition implements Condition {
 
-    // return true if the queue condition is satisfied
-    boolean test();
+    private final ReentrantLock queueLock = new ReentrantLock();
+    private final java.util.concurrent.locks.Condition condition = queueLock.newCondition();
 
     // wake me when the condition is satisfied, or timeout
-    void awaitNanos(final long timeout) throws InterruptedException;
+    @Override
+    public void awaitNanos(final long timeout) throws InterruptedException {
+        queueLock.lock();
+        try {
+            condition.awaitNanos(timeout);
+        }
+        finally {
+            queueLock.unlock();
+        }
+    }
 
     // wake if signal is called, or wait indefinitely
-    void await() throws InterruptedException;
+    @Override
+    public void await() throws InterruptedException {
+        queueLock.lock();
+        try {
+            condition.await();
+        }
+        finally {
+            queueLock.unlock();
+        }
+    }
 
     // tell threads waiting on condition to wake up
-    void signal();
+    @Override
+    public void signal() {
+        queueLock.lock();
+        try {
+            condition.signalAll();
+        }
+        finally {
+            queueLock.unlock();
+        }
+
+    }
 
 }

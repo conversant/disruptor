@@ -27,7 +27,7 @@ import org.junit.Test;
 /**
  * Created by jcairns on 12/11/14.
  */
-public class AbstractWaitingQueueConditionTest {
+public class AbstractWaitingConditionTest {
 
     private volatile boolean isCondition = true;
 
@@ -103,7 +103,7 @@ public class AbstractWaitingQueueConditionTest {
     }
 
 
-    final class TestQueueCondition extends AbstractWaitingQueueCondition {
+    final class TestQueueCondition extends AbstractWaitingCondition {
 
         @Override
         public boolean test() {

@@ -33,4 +33,9 @@ final class PaddedLong {
     public PaddedLong(final long l) {
         value=l;
     }
+
+    public String toString() {
+        return Long.toString(value);
+    }
+
 }

@@ -106,6 +106,8 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public boolean offer(E e) {
+        int spin = 0;
+
         for(;;) {
             final long tailSeq = tail.get();
             // never offer onto the slot that is currently being polled off
@@ -136,12 +138,14 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                 return false;
             }
 
-            Thread.yield();
+            spin = Condition.progressiveYield(spin);
         }
     }
 
     @Override
     public E poll() {
+        int spin = 0;
+
         for(;;) {
             final long head = this.head.get();
             // is there data for us to poll
@@ -168,7 +172,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
 
             // this is the spin waiting for access to the queue
-            Thread.yield();
+            spin = Condition.progressiveYield(spin);
         }
     }
 
@@ -187,6 +191,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
          * with poll
          */
         final int maxElements = e.length;
+        int spin = 0;
 
         for(;;) {
             final long pollPos = head.get(); // prepare to qualify?
@@ -211,6 +216,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                 return 0;
             }
             // wait for access
+            spin = Condition.progressiveYield(spin);
         }
     }
 
@@ -230,11 +236,12 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final boolean isEmpty() {
-        return size() == 0;
+        return tail.get() == head.get();
     }
 
     @Override
     public void clear() {
+        int spin = 0;
         for(;;) {
             final long head = this.head.get();
             if(headCursor.compareAndSet(head, head+1)) {
@@ -256,8 +263,10 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return;
                     }
+                    spin = Condition.progressiveYield(spin);
                 }
             }
+            spin = Condition.progressiveYield(spin);
         }
     }
 

@@ -23,7 +23,7 @@ public class ConcurrentStackPerformanceTest {
     private static void runRate(Stack<Integer> stack) throws InterruptedException {
         final Thread thread = new Thread(() -> {
             for(int i=0; i<NRUN; i++) {
-                while(!stack.add(INTVAL)) {
+                while(!stack.push(INTVAL)) {
                     Thread.yield();;
                 }
             }

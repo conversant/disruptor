@@ -38,4 +38,8 @@ final class PaddedAtomicLong extends AtomicLong {
         return p1+p2+p3+p4+p5+p6;
     }
 
+    public String toString() {
+        return Long.toString(get());
+    }
+
 }
