@@ -115,7 +115,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
     /**
      * add an element to the stack, failing if the stack is unable to grow
      *
-     * @param n
+     * @param n - the element to push
      *
      * @return boolean - false if stack overflow, true otherwise
      */

@@ -36,6 +36,8 @@ public interface BlockingStack<N> extends Stack<N> {
      * @param time - the maximum time to wait
      * @param unit - unit of waiting time
      * @return boolean - true if item was pushed, false otherwise
+     *
+     * @throws InterruptedException on interrupt
      */
     boolean push(final N n, final long time, final TimeUnit unit) throws InterruptedException;
 
@@ -53,6 +55,8 @@ public interface BlockingStack<N> extends Stack<N> {
      * @param time - the maximum time to wait
      * @param unit - the time unit for the waiting time
      * @return N - the popped element, or null in the event of a timeout
+     *
+     * @throws InterruptedException on interrupt
      */
     N pop(final long time, final TimeUnit unit) throws InterruptedException;
 
@@ -64,4 +68,5 @@ public interface BlockingStack<N> extends Stack<N> {
      * @throws InterruptedException - in the event the current thread is interrupted prior to popping any element
      */
     N popInterruptibly() throws InterruptedException;
+
 }

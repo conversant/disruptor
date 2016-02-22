@@ -101,7 +101,7 @@ public class Percentile {
     /**
      * Add a measurement to estimate
      *
-     * @param x
+     * @param x - the value of the measurement
      */
     public void add(final float x) {
         if(isInitializing) {

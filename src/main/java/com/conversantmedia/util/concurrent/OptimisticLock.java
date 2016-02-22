@@ -18,7 +18,7 @@ public interface OptimisticLock {
      * check if optimistic locking succeeded
      *
      * @param lockToken - the value returned from tryLock
-     * @return
+     * @return boolean - true if lock was held
      */
     boolean readLockHeld(long lockToken);
 
@@ -32,7 +32,7 @@ public interface OptimisticLock {
     /**
      * @return long - the token indicating the lock state
      *
-     * @throws InterruptedException
+     * @throws InterruptedException - on interrupt
      */
     long tryWriteLockInterruptibly() throws InterruptedException;
 
@@ -43,13 +43,15 @@ public interface OptimisticLock {
 
     /**
      * @return long - the token indicating the lock state, or 0 if not available
+     *
+     * @throws InterruptedException on interrupt
      */
     long tryWriteLock(long time, TimeUnit unit) throws InterruptedException;
 
     /**
      * "commit" or unlock the sequence when the write lock is held
      *
-     * @param sequence
+     * @param sequence - lock sequence to unlock
      */
     void unlock(final long sequence);
 
