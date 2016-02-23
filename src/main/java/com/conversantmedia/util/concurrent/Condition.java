@@ -96,22 +96,4 @@ interface Condition {
         return true;
     }
 
-    /**
-     * Wait for timeout on condition
-     *
-     * @param condition - condition to wait for
-     * @return boolean - true if status was detected
-     * @throws InterruptedException - on interrupt
-     */
-    static boolean waitStatus(final Condition condition) throws InterruptedException {
-        // until condition is signaled
-
-        // the queue is empty or full wait for something to change
-        while (condition.test()) {
-            condition.await();
-        }
-
-        return true;
-    }
-
 }

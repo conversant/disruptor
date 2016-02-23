@@ -97,7 +97,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.waitStatus(stackNotFullCondition);
+            stackNotFullCondition.await();
         }
         stackNotEmptyCondition.signal();
     }
@@ -241,7 +241,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
                     throw new InterruptedException();
                 }
             }
-            Condition.waitStatus(stackNotEmptyCondition);
+            stackNotEmptyCondition.await();
         }
     }
 

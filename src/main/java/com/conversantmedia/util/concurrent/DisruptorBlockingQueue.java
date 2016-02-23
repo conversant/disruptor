@@ -216,7 +216,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.waitStatus(queueNotFullCondition);
+            queueNotFullCondition.await();
         }
     }
 
@@ -244,7 +244,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
                 throw new InterruptedException();
             }
 
-            Condition.waitStatus(queueNotEmptyCondition);
+            queueNotEmptyCondition.await();
         }
     }
 
@@ -444,7 +444,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
     private final boolean isFull() {
         final long queueStart = tail.get() - size;
-        return ((headCache.value == queueStart) || (headCache.value = head.get()) == queueStart);
+        return ((headCache.value == queueStart) && (headCache.value = head.get()) == queueStart);
     }
 
     private final class RingIter implements Iterator<E> {

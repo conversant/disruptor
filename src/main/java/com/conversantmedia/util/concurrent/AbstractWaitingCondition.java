@@ -147,13 +147,17 @@ abstract class AbstractWaitingCondition implements Condition {
                         int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
                             if((waitSequence & WAITER_MASK) == WAITER_MASK) {
-                                spin = Condition.progressiveYield(spin);
+                                if(spin < Condition.MAX_PROG_YIELD) {
+                                    spin = Condition.progressiveYield(spin);
+                                } else {
+                                    LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
+                                }
                             }
                         }
 
                         // are we a waiter?   wait until we are awakened
                         while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && !t.isInterrupted()) {
-                            LockSupport.park();
+                            LockSupport.parkNanos(1_000_000L);
                         }
 
                         if(t.isInterrupted()) {

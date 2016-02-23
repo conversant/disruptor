@@ -164,7 +164,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.waitStatus(queueNotFullCondition);
+            queueNotFullCondition.await();
         }
     }
 
@@ -191,7 +191,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.waitStatus(queueNotEmptyCondition);
+            queueNotEmptyCondition.await();
         }
     }
 
@@ -332,7 +332,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
 
     private final boolean isFull() {
         final long queueStart = tail.get() - size;
-        return ((headCache.value == queueStart) || (headCache.value = head.get()) == queueStart);
+        return ((headCache.value == queueStart) && (headCache.value = head.get()) == queueStart);
     }
 
     private final class RingIter implements Iterator<E> {

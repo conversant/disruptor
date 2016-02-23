@@ -35,9 +35,12 @@ abstract class AbstractCondition implements Condition {
     // wake me when the condition is satisfied, or timeout
     @Override
     public void awaitNanos(final long timeout) throws InterruptedException {
+        long remaining = timeout;
         queueLock.lock();
         try {
-            condition.awaitNanos(timeout);
+            while(test() && remaining > 0) {
+                remaining = condition.awaitNanos(remaining);
+            }
         }
         finally {
             queueLock.unlock();
@@ -49,7 +52,9 @@ abstract class AbstractCondition implements Condition {
     public void await() throws InterruptedException {
         queueLock.lock();
         try {
-            condition.await();
+            while(test()) {
+                condition.await();
+            }
         }
         finally {
             queueLock.unlock();
