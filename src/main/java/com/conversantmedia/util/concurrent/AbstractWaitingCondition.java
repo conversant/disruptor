@@ -45,7 +45,11 @@ abstract class AbstractWaitingCondition implements Condition {
     private final AtomicInteger waitCount = new PaddedAtomicInteger(0);
     private final PaddedInt waitCache = new PaddedInt(0);
 
-    // @return boolean - true if condition is satisfied
+    /**
+     * code below will block until test() returns false
+     *
+     * @return boolean - true if condition is not satisfied
+     */
     @Override
     public abstract boolean test();
 
@@ -83,12 +87,13 @@ abstract class AbstractWaitingCondition implements Condition {
                         // wait to become a waiter
                         int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && expires>timeNow) {
-                            // too many threads are waiting?
-                            if((waitSequence & WAITER_MASK) == WAITER_MASK) {
-                                // stall after N tries because every waiting thread slot is already occupied
+                            if(spin < Condition.MAX_PROG_YIELD) {
                                 spin = Condition.progressiveYield(spin);
-                                timeNow = System.nanoTime();
+                            } else {
+                                LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
                             }
+
+                            timeNow = System.nanoTime();
                         }
                         // are we a waiter?   wait until we are awakened
                         while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && expires>timeNow && !t.isInterrupted()) {
@@ -146,12 +151,10 @@ abstract class AbstractWaitingCondition implements Condition {
                         // wait to become a waiter
                         int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
-                            if((waitSequence & WAITER_MASK) == WAITER_MASK) {
-                                if(spin < Condition.MAX_PROG_YIELD) {
-                                    spin = Condition.progressiveYield(spin);
-                                } else {
-                                    LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
-                                }
+                            if(spin < Condition.MAX_PROG_YIELD) {
+                                spin = Condition.progressiveYield(spin);
+                            } else {
+                                LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
                             }
                         }
 
