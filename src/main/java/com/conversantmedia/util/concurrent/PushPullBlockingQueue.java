@@ -170,7 +170,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
 
     @Override
     public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
-        for (; ; ) {
+        for (;;) {
             if (offer(e)) {
                 return true;
             } else {

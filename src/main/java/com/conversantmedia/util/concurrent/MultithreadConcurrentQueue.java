@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * This data structure approaches 20-40ns for transfers on fast hardware.
  *
+ * This code is optimized and tested using a 64bit HotSpot JVM on an Intel x86-64 environment.  Other
+ * environments should be carefully tested before using in production.
+ *
  *
  * Created by jcairns on 5/29/14.
  */
@@ -58,9 +61,6 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     // i.e. 0, 1, 2, ..., m, 0, 1, 2, ..., m
 
 
-    // a ring buffer representing the queue
-    protected final E[] buffer;
-
     // this data structure is sensitive to the head/tail sequence numbers
     // rolling negative, the capacity check comparisons have all been cast
     // with positive sequence numbers in mind
@@ -70,21 +70,24 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     // ...in case your wondering the answer is 292 years
 
-
-    // the sequence number of the end of the queue
-    protected final AtomicLong tail = new PaddedAtomicLong(0L);
-    // the sequence number of the start of the queue
-    protected final AtomicLong head =  new PaddedAtomicLong(0L);
-
-    // use the value in the L1 cache rather than reading from memory when possible
-    protected final PaddedLong tailCache = new PaddedLong(0L);
-    protected final PaddedLong headCache = new PaddedLong(0L);
-
     // The readers must know if the tail has been updated
     // by concurrently executing write operations.
     // This is updated at the end of the write operation
     // to allow readers thread safe access to the queue tail.
+
+
+    // the sequence number of the end of the queue
+    protected final AtomicLong tail = new PaddedAtomicLong(0L);
+    // use the value in the L1 cache rather than reading from memory when possible
+    protected final PaddedLong tailCache = new PaddedLong(0L);
     protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
+
+    // a ring buffer representing the queue
+    protected final E[] buffer;
+
+    // the sequence number of the start of the queue
+    protected final AtomicLong head =  new PaddedAtomicLong(0L);
+    protected final PaddedLong headCache = new PaddedLong(0L);
     protected final AtomicLong headCursor = new PaddedAtomicLong(0L);
 
     /**
@@ -226,7 +229,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         // note these values can roll from positive to
         // negative, this is properly handled since
         // it is a difference
-        return (int)(tail.get() - head.get());
+        return (int)Math.max((tail.get() - head.get()), 0);
     }
 
     @Override

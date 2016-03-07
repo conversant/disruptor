@@ -12,10 +12,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class DisruptorFairSchedulingTest {
 
-    private static final int NTHREAD = 32;
+    private static final int NTHREAD = 8*Runtime.getRuntime().availableProcessors();
 
     private static final Long LONGMSG = Long.valueOf(3663L);
     public static final long TIMEOUT = 20_000L;
+    public static final int MIN_PROGRESS = 0;
+    public static final long JOIN_TIMEOUT = 100L;
+    public static final int QUEUE_SZ = 1024;
 
     private BlockingQueue<Long> msgQueue;
 
@@ -24,7 +27,7 @@ public class DisruptorFairSchedulingTest {
 
     @Before
     public void setup() {
-        msgQueue = new DisruptorBlockingQueue<Long>(1024, SpinPolicy.WAITING);
+        msgQueue = new DisruptorBlockingQueue<Long>(QUEUE_SZ, SpinPolicy.WAITING);
         isRunning = true;
     }
 
@@ -53,7 +56,7 @@ public class DisruptorFairSchedulingTest {
 
         boolean allProgressed = true;
         for(int i=0; i<NTHREAD; i++) {
-            if(check[i].madeProgress == -1) {
+            if(check[i].madeProgress < MIN_PROGRESS) {
                 allProgressed = false;
             }
             System.out.print(check[i].madeProgress);
@@ -68,7 +71,7 @@ public class DisruptorFairSchedulingTest {
         }
 
         for(int i=0; i<NTHREAD; i++) {
-            thread[i].join(100L);
+            thread[i].join(JOIN_TIMEOUT);
         }
 
         Assert.assertTrue(allProgressed);
@@ -101,7 +104,7 @@ public class DisruptorFairSchedulingTest {
 
         boolean allProgressed = true;
         for(int i=0; i<NTHREAD; i++) {
-            if(check[i].madeProgress == -1) {
+            if(check[i].madeProgress < MIN_PROGRESS) {
                 allProgressed = false;
             }
             System.out.print(check[i].madeProgress);
@@ -111,7 +114,7 @@ public class DisruptorFairSchedulingTest {
         System.out.println();
 
         for(int i=0; i<NTHREAD; i++) {
-            thread[i].join();
+            thread[i].join(JOIN_TIMEOUT);
         }
 
         Assert.assertTrue(allProgressed);

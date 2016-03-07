@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * @author John Cairns
  * <p>Date: 7/9/12</p>
  */
-public class ConcurrentStack<N> implements BlockingStack<N> {
+public final class ConcurrentStack<N> implements BlockingStack<N> {
 
     private final int size;
 
@@ -78,7 +78,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
 
 
     @Override
-    public boolean push(final N n, final long time, final TimeUnit unit) throws InterruptedException {
+    public final boolean push(final N n, final long time, final TimeUnit unit) throws InterruptedException {
         final long endDate = System.nanoTime() + unit.toNanos(time);
         while(!push(n)) {
             if(endDate - System.nanoTime() < 0) {
@@ -92,7 +92,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
     }
 
     @Override
-    public void pushInterruptibly(final N n) throws InterruptedException {
+    public final void pushInterruptibly(final N n) throws InterruptedException {
         while(!push(n)) {
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
@@ -103,7 +103,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
     }
 
     @Override
-    public boolean contains(final N n) {
+    public final boolean contains(final N n) {
         if(n != null) {
             for(int i = 0; i<stackTop.get(); i++) {
                 if(n.equals(stack.get(i))) return true;
@@ -120,7 +120,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * @return boolean - false if stack overflow, true otherwise
      */
     @Override
-    public boolean push(final N n) {
+    public final boolean push(final N n) {
         int spin = 0;
         for(;;) {
 
@@ -154,7 +154,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * @return N - the object at the top of the stack
      */
     @Override
-    public N peek() {
+    public final N peek() {
         // read the current cursor
         int spin = 0;
         for(;;) {
@@ -179,7 +179,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * @return N - The object on the top of the stack
      */
     @Override
-    public N pop() {
+    public final N pop() {
 
         int spin = 0;
         // now pop the stack
@@ -213,7 +213,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
     }
 
     @Override
-    public N pop(final long time, final TimeUnit unit) throws InterruptedException {
+    public final N pop(final long time, final TimeUnit unit) throws InterruptedException {
         final long endTime = System.nanoTime() + unit.toNanos(time);
         for(;;) {
             final N n = pop();
@@ -230,7 +230,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
     }
 
     @Override
-    public N popInterruptibly() throws InterruptedException {
+    public final N popInterruptibly() throws InterruptedException {
         for(;;) {
             final N n = pop();
             if(n != null) {
@@ -250,7 +250,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * @return int - number of elements in the stack
      */
     @Override
-    public int size() {
+    public final int size() {
         return stackTop.get();
     }
 
@@ -258,7 +258,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * how much available space in the stack
      */
     @Override
-    public int remainingCapacity() {
+    public final int remainingCapacity() {
         return size - stackTop.get();
     }
 
@@ -266,7 +266,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      * @return boolean - true if stack is currently empty
      */
     @Override
-    public boolean isEmpty() {
+    public final boolean isEmpty() {
         return stackTop.get()==0;
     }
 
@@ -274,7 +274,7 @@ public class ConcurrentStack<N> implements BlockingStack<N> {
      *  clear the stack - does not null old references
      */
     @Override
-    public void clear() {
+    public final void clear() {
         int spin = 0;
         for(;;) {
             final long writeLock = seqLock.tryWriteLock();

@@ -27,18 +27,21 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * Transfers from a single thread writer to a single thread reader are orders of nanoseconds (3-5)
  *
+ * This code is optimized and tested using a 64bit HotSpot JVM on an Intel x86-64 environment.  Other
+ * environments should be carefully tested before using in production.
+ *
  * Created by jcairns on 5/28/14.
  */
 public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final int size;
     protected final long mask;
 
+    protected final AtomicLong tail = new PaddedAtomicLong(0L);
+    protected final PaddedLong tailCache = new PaddedLong();
+
     protected final E[] buffer;
 
-    protected final AtomicLong tail = new PaddedAtomicLong(0L);
     protected final AtomicLong head = new PaddedAtomicLong(0L);
-
-    protected final PaddedLong tailCache = new PaddedLong();
     protected final PaddedLong headCache = new PaddedLong();
 
     public PushPullConcurrentQueue(final int size) {
@@ -118,7 +121,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final int size() {
-        return (int)(tail.get() - head.get());
+        return (int)Math.max(tail.get() - head.get(), 0);
     }
 
     @Override
