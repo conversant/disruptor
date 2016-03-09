@@ -2,3 +2,4 @@
 1.2.1 - Adding Conversant Stack
 1.2.2 - Condition, Waiting, SpinPolicy, Overall Tuning
 1.2.4 - Bug fixing, Progress and CPU aggressiveness
+1.2.5 - Fixing a rare bug in the size() method

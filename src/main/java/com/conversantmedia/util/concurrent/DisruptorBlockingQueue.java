@@ -352,14 +352,14 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
                         // just blocked access to the entire queue - go for it
                         for (int i = 0; i < size(); i++) {
                             final int slot = (int) ((this.head.get() + i) & mask);
-                            if (buffer[slot] != null && buffer[slot].equals(o)) {
+                            if (buffer.get(slot) != null && buffer.get(slot).equals(o)) {
                                 n++;
 
                                 for (int j = i; j > 0; j--) {
                                     final int cSlot = (int) ((this.head.get() + j - 1) & mask);
                                     final int nextSlot = (int) ((this.head.get() + j) & mask);
                                     // overwrite ith element with previous
-                                    buffer[nextSlot] = buffer[cSlot];
+                                    buffer.set(nextSlot, buffer.get(cSlot));
                                 }
                             }
                         }
@@ -423,8 +423,8 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
         for (int i = 0; i < size(); i++) {
             final int headSlot = (int) ((head.get() + i) & mask);
-            if (!c.contains(buffer[headSlot])) {
-                if (!remove(buffer[headSlot])) {
+            if (!c.contains(buffer.get(headSlot))) {
+                if (!remove(buffer.get(headSlot))) {
                     numFalses++;
                 } else {
                     // backtrack one step, we just backed values up at this point
@@ -465,7 +465,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
         public E next() {
             final long pollPos = head.get();
             final int slot = (int) ((pollPos + dx++) & mask);
-            lastObj = buffer[slot];
+            lastObj = buffer.get(slot);
             return lastObj;
         }
 
