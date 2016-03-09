@@ -21,7 +21,6 @@ package com.conversantmedia.util.concurrent;
  */
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * This is the disruptor implemented for multiple simultaneous reader and writer threads.
@@ -84,7 +83,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
 
     // a ring buffer representing the queue
-    protected final AtomicReferenceArray<E> buffer;
+    protected final E[] buffer;
 
     // the sequence number of the start of the queue
     protected final AtomicLong head =  new PaddedAtomicLong(0L);
@@ -105,7 +104,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         while(c < capacity) c <<=1;
         size = c;
         mask = size - 1L;
-        buffer = new AtomicReferenceArray(size);
+        buffer = (E[])new Object[size];
     }
 
     @Override
@@ -130,7 +129,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         // convert sequence number to slot id
                         final int tailSlot = (int)(tailSeq&mask);
-                        buffer.set(tailSlot, e);
+                        buffer[tailSlot] = e;
 
                         return true;
                     } finally {
@@ -160,10 +159,10 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                     try {
                         // copy the data out of slot
                         final int pollSlot = (int)(head&mask);
-                        final E   pollObj  = (E) buffer.get(pollSlot);
+                        final E   pollObj  = (E) buffer[pollSlot];
 
                         // got it, safe to read and free
-                        buffer.lazySet(pollSlot, null);
+                        buffer[pollSlot] = null;
 
                         return pollObj;
                     } finally {
@@ -182,7 +181,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final E peek() {
-        return buffer.get((int)(head.get()&mask));
+        return buffer[(int)(head.get()&mask)];
     }
 
 
@@ -207,7 +206,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                 for(int i=0; i<nToRead;i++) {
                     final int pollSlot = (int)((pollPos+i)&mask);
-                    e[i] = buffer.get(pollSlot);
+                    e[i] = buffer[pollSlot];
                 }
 
                 // if we still control the sequence, update and return
@@ -256,8 +255,8 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                         // we just blocked all changes to the queue
 
                         // remove leaked refs
-                        for (int i = 0; i < buffer.length(); i++) {
-                            buffer.lazySet(i, null);
+                        for (int i = 0; i < buffer.length; i++) {
+                            buffer[i] = null;
                         }
 
                         // advance head to same location as current end
@@ -278,7 +277,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     public final boolean contains(Object o) {
         for(int i=0; i<size(); i++) {
             final int slot = (int)((head.get() + i) & mask);
-            if(buffer.get(slot) != null && buffer.get(slot).equals(o)) return true;
+            if(buffer[slot]!= null && buffer[slot].equals(o)) return true;
         }
         return false;
     }

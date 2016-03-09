@@ -1,6 +1,9 @@
 package com.conversantmedia.util.concurrent;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -9,7 +12,6 @@ import java.util.concurrent.Executors;
 /**
  * Created by jcairns on 2/23/16.
  */
-@Ignore
 public class DisruptorPutTakeStressTest {
 
     private static final int QUEUE_SZ = 1024;
