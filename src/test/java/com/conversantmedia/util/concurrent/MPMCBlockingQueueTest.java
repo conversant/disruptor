@@ -20,39 +20,59 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author John Cairns <jcairns@dotomi.com>
  *         Date: 4//25/12
  *         Time: 3:27 PM
  */
-public class PushPullBlockingQueueTest {
+public class MPMCBlockingQueueTest {
 
     final static boolean ALLOW_LONG_RUN = false;
 
+    private ThreadPoolExecutor executor;
+
+    @Before
+    public void setup() {
+        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(1024));
+    }
+
+    @After
+    public void teardown() {
+        executor.shutdown();
+    }
+
     @Test
-    public void testPushPullBlockingQueueTestC1() {
+    public void testAsSynchronousQueue() {
+        final int cap = 1;
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
+        while(dbq.offer(Integer.valueOf(0)));
+
+        Assert.assertFalse(dbq.offer(Integer.valueOf(10)));
+
+        Assert.assertEquals(2, dbq.size());
+
+        Assert.assertEquals(Integer.valueOf(0), dbq.poll());
+    }
+
+
+    @Test
+    public void testDisruptorBlockingQueueTestC1() {
         final int cap = 10;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
         while(dbq.offer(Integer.valueOf(0)));
         Assert.assertEquals(16, dbq.size());
     }
 
     @Test
-    public void testPushPullBlockingQueueTestC2() {
+    public void testMPMCBlockingQueueTestC2() {
 
         final int cap = 50;
 
@@ -61,7 +81,7 @@ public class PushPullBlockingQueueTest {
             x.add(Integer.valueOf(i));
         }
 
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap, x);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap, x);
         // next power of two
         Assert.assertEquals(64, dbq.size());
     }
@@ -70,7 +90,7 @@ public class PushPullBlockingQueueTest {
     public void testOffer() {
 
         final int cap = 16;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
         }
@@ -89,7 +109,7 @@ public class PushPullBlockingQueueTest {
     public void remove() {
 
         final int cap = 10;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
         }
@@ -105,7 +125,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testPoll() {
         final int cap = 10;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         Assert.assertNull(dbq.poll());
 
@@ -118,9 +138,31 @@ public class PushPullBlockingQueueTest {
     }
 
     @Test
+    public void inOutIn() {
+        final int cap = 8;
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
+
+        Assert.assertNull(dbq.poll());
+
+        for(int i=0; i<10; i++) {
+            for(int j=0; j<cap; j++) {
+                dbq.offer(j);
+            }
+
+            Assert.assertFalse(dbq.offer(1000));
+
+            for(int j=0; j<cap; j++) {
+                Assert.assertEquals(Integer.valueOf(j), dbq.poll());
+            }
+
+            Assert.assertNull(dbq.poll());
+        }
+    }
+
+    @Test
     public void testElement() {
         final int cap = 10;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         try {
             dbq.element();
@@ -134,7 +176,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testPeek() {
         final int cap = 10;
-        BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         try {
 
@@ -160,26 +202,23 @@ public class PushPullBlockingQueueTest {
     public void testPut() throws InterruptedException {
 
         final int cap = 10;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
         }
 
-        new Thread(){
-            @Override
-            public void run() {
-                try {
-                    sleep(1000);
-                    // after a second remove one
-                    dbq.poll();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
 
+        executor.execute(() -> {
+            try {
+                Thread.sleep(1000);
+                // after a second remove one
+                dbq.poll();
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
 
         // in main thread add one
         // this operation must wait for thread
@@ -194,36 +233,59 @@ public class PushPullBlockingQueueTest {
 
     }
 
-    @Ignore // this test flickers in @ParallelRunner
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testRemoveAllIsNotSupported() {
+
+        final int cap = 100;
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<Integer>(cap);
+
+        dbq.removeAll(Collections.emptySet());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testRemoveIsNotSupported() {
+        final int cap = 100;
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<Integer>(cap);
+
+        dbq.remove(0);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testRetainAllIsNotSupported() {
+        final int cap = 100;
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<Integer>(cap);
+
+        dbq.retainAll(Collections.emptySet());
+    }
+
+
+
+    @Ignore // FIXME - this test flickers in parallel test runner
     public void testTimeOffer() throws InterruptedException {
 
         final int cap = 16;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
         }
 
-        new Thread(){
-            @Override
-            public void run() {
-                try {
-                    sleep(1000);
-                    // after a second remove one
-                    dbq.poll();
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        executor.execute(() -> {
+            try {
+                Thread.sleep(1500);
+                // after a second remove one
+                dbq.poll();
             }
-        }.start();
-
-
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
 
         // expect to fail for only 50 ms
         Assert.assertFalse(dbq.offer(Integer.valueOf(cap), 50, TimeUnit.MILLISECONDS));
 
-        Assert.assertTrue(dbq.offer(Integer.valueOf(cap), 1550, TimeUnit.MILLISECONDS));
+        Assert.assertTrue(dbq.offer(Integer.valueOf(cap), 16550, TimeUnit.MILLISECONDS));
 
         boolean hasValCap = false;
         while(!dbq.isEmpty()) {
@@ -233,49 +295,84 @@ public class PushPullBlockingQueueTest {
         Assert.assertTrue(hasValCap);
     }
 
+    @Ignore // timing test not suitble for build
+    public void pollTimeIsAccurate() throws InterruptedException {
+        final MPMCBlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(256);
+
+        final long startTime = System.nanoTime();
+
+        for(int i=0; i<50; i++) {
+            dbq.poll(100, TimeUnit.MICROSECONDS);
+        }
+
+        final long runTime = System.nanoTime()- startTime;
+
+        final long expTime = 50*100*1000;
+        Assert.assertTrue(runTime >= expTime/2);
+
+        Assert.assertTrue(runTime <= expTime*2);
+    }
+
+
+    @Ignore // timing test are not suitable for build
+    public void offerTimeIsAccurate() throws InterruptedException {
+        final MPMCBlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(256);
+
+        for(int i=0; i<256; i++) {
+            dbq.offer(1);
+        }
+
+        final long startTime = System.nanoTime();
+
+        for(int i=0; i<50; i++) {
+            dbq.offer(1, 100, TimeUnit.MICROSECONDS);
+        }
+
+        final long runTime = System.nanoTime()- startTime;
+
+        final long expTime = 50*100*1000;
+        Assert.assertTrue(runTime >= expTime/2);
+        Assert.assertTrue(runTime <= expTime*2);
+
+    }
+
+
     @Test
     public void testTake() throws InterruptedException {
 
         final int cap = 10;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
-        new Thread(){
-            @Override
-            public void run() {
-                try {
-                    sleep(1000);
-                    // after a second remove one
-                    dbq.offer(Integer.valueOf(cap));
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        executor.execute(() -> {
+            try {
+                Thread.sleep(1000);
+                // after a second remove one
+                dbq.offer(Integer.valueOf(cap));
             }
-        }.start();
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
 
         // wait for value to be added
         Assert.assertEquals(Integer.valueOf(cap), dbq.take());
-
     }
 
     @Test
     public void testTimePoll() throws InterruptedException {
         final int cap = 10;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
-        new Thread(){
-            @Override
-            public void run() {
-                try {
-                    sleep(500);
-                    // after a second remove one
-                    dbq.offer(Integer.valueOf(cap));
-                }
-                catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        executor.execute(() -> {
+            try {
+                Thread.sleep(1000);
+                // after a second remove one
+                dbq.offer(Integer.valueOf(cap));
             }
-        }.start();
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
 
         // wait for value to be added
         Assert.assertNull(dbq.poll(50, TimeUnit.MICROSECONDS));
@@ -285,7 +382,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testRemainingCapacity() {
         final int cap = 128;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             Assert.assertEquals(cap-i, dbq.remainingCapacity());
@@ -297,7 +394,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testDrainToC() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
@@ -318,7 +415,7 @@ public class PushPullBlockingQueueTest {
 
         final int cap = 100;
         final int max = 75;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
@@ -336,13 +433,13 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testSize() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         Assert.assertEquals(0, dbq.size());
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
-            Assert.assertEquals(i+1, dbq.size());
+            Assert.assertEquals(i + 1, dbq.size());
         }
 
         Assert.assertEquals(cap, dbq.size());
@@ -356,7 +453,7 @@ public class PushPullBlockingQueueTest {
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
-            Assert.assertEquals(i+1, dbq.size());
+            Assert.assertEquals(i + 1, dbq.size());
         }
 
         Assert.assertEquals(cap, dbq.size());
@@ -371,7 +468,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testIsEmpty() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         Assert.assertTrue(dbq.isEmpty());
 
@@ -404,7 +501,7 @@ public class PushPullBlockingQueueTest {
     public void testContains() {
 
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             Assert.assertFalse(dbq.contains(Integer.valueOf(i)));
@@ -429,24 +526,22 @@ public class PushPullBlockingQueueTest {
     public void testToArray() {
 
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
-
-            dbq.offer(Integer.valueOf(i));
+            Assert.assertTrue(dbq.offer(Integer.valueOf(i)));
         }
 
         Object[] objArray = dbq.toArray();
         for(int i=0; i<cap; i++) {
-            Assert.assertEquals(objArray[i], Integer.valueOf(i));
+            Assert.assertEquals(Integer.valueOf(i), objArray[i]);
         }
-
     }
 
     @Test
     public void testAdd() {
         final int cap = 16;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
 
@@ -461,58 +556,11 @@ public class PushPullBlockingQueueTest {
         }
     }
 
-    @Test(expected = UnsupportedOperationException.class)
-    public void testRemoveObj() {
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-
-        for(int i=0; i<cap; i++) {
-
-            dbq.offer(Integer.valueOf(i));
-        }
-
-        for(int i=0; i<cap; i+=2) {
-            dbq.remove(Integer.valueOf(i));
-        }
-
-        Assert.assertEquals(dbq.size(), cap/2);
-
-        for(int i=1; i<cap; i+=2) {
-            Assert.assertEquals(Integer.valueOf(i), dbq.poll());
-        }
-    }
-
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testRemoveObjDups() {
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-
-        for(int i=0; i<cap; i++) {
-            // all just zeros and ones
-            dbq.offer(Integer.valueOf(i&1));
-        }
-
-        // nothing removed
-        dbq.remove(Integer.valueOf(777));
-
-        Assert.assertEquals(dbq.size(), cap);
-
-        dbq.remove(Integer.valueOf(1));
-
-        Assert.assertEquals(dbq.size(), cap/2);
-
-        for(int i=1; i<cap; i+=2) {
-            Assert.assertEquals(Integer.valueOf(0), dbq.poll());
-        }
-    }
-
-
     @Test
     public void testContainsAll() {
 
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
 
@@ -536,7 +584,7 @@ public class PushPullBlockingQueueTest {
     public void testAddAll() {
 
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         Set<Integer> si = new HashSet(cap);
         for(int i=0; i<cap/10; i++) {
@@ -561,101 +609,9 @@ public class PushPullBlockingQueueTest {
     }
 
     @Test
-    public void testAddAllReturn() {
-
-        final int cap = 8;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<>(cap);
-
-        final Set<Integer> set = new HashSet();
-
-        for(int i=0; i<8; i++) {
-            set.add(i);
-        }
-
-        Assert.assertTrue(dbq.addAll(set));
-
-        Integer iVal = dbq.poll();
-        while(iVal != null) {
-            Assert.assertTrue(set.contains(iVal));
-            iVal = dbq.poll();
-        }
-
-        for(int i=0; i<20; i++) {
-            set.add(i);
-        }
-
-        // at least one will fail
-        Assert.assertTrue(dbq.addAll(set));
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testRemoveIsNotSupported() {
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-
-        dbq.remove(0);
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testRemoveAllIsNotSupported() {
-
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-
-        dbq.removeAll(Collections.emptySet());
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testRetainAllIsNotSupported() {
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-
-        dbq.retainAll(Collections.emptySet());
-    }
-
-
-    @Test(timeout=30000)
-    public void testOverflowingOffers() throws InterruptedException {
-        // there is a problem in the native implementation
-        // of null overwriting the added value on the last bucket
-        // when the queue was just full
-        final int NRUN = 10_000;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(64);
-        final Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for(int i=0; i<NRUN; i++) {
-                    while(!dbq.offer(i)) {
-                        Thread.yield(); // fast
-                    }
-                }
-            }
-        });
-
-        t.start();
-
-        int i;
-        for(i=0; i<NRUN; i++) {
-            Integer j=null;
-            while(j==null) {
-                try {
-                    Thread.sleep(1); // slower
-                } catch(InterruptedException e) {
-                    // ignore!
-                }
-                j = dbq.poll();
-            }
-        }
-
-        t.join();
-
-        Assert.assertEquals(NRUN, i);
-    }
-
-    @Test
     public void testClear() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
@@ -677,7 +633,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testIterator() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
@@ -692,7 +648,7 @@ public class PushPullBlockingQueueTest {
     @Test
     public void testTypeToArray() {
         final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+        final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
         for(int i=0; i<cap; i++) {
             dbq.offer(Integer.valueOf(i));
@@ -715,7 +671,7 @@ public class PushPullBlockingQueueTest {
 
         if(ALLOW_LONG_RUN) {
             final int cap = 3;
-            final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
+            final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
             long  nIter = 0;
 
@@ -738,74 +694,5 @@ public class PushPullBlockingQueueTest {
         } else {
             System.out.println("max value test not executed");
         }
-    }
-
-    @Test
-    public void testSequentialFeed() throws InterruptedException {
-
-        final int feedCount = 2*8192;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(128);
-        final AtomicInteger nFed = new AtomicInteger(0);
-        final AtomicInteger nRead = new AtomicInteger(0);
-
-
-        final int nFeeders = 1;
-
-        final Thread[] f=new Thread[nFeeders];
-        for(int i=0; i<nFeeders; i++) {
-            f[i] = new Thread(){
-                @Override
-                public void run() {
-                    try {
-                        for(int i = 0; i<feedCount/nFeeders; i++) {
-                            while(!dbq.offer(i, 50L, TimeUnit.MICROSECONDS)) yield();
-                            nFed.incrementAndGet();
-                        }
-                    } catch(InterruptedException ex) {
-
-                    }
-                }
-            };
-            f[i].start();
-        }
-
-        final int nReaders = 1;
-        Thread[] t = new Thread[nReaders];
-        for(int i=0; i<nReaders; i++) {
-            t[i]=new Thread(){
-                @Override
-                public void run() {
-                    try {
-                        while(nRead.get()<feedCount) {
-                            Integer r;
-                            do {
-                                r = dbq.poll(50, TimeUnit.MILLISECONDS);
-                                if(r == null) yield();
-                            } while((r == null) && (nRead.get()<feedCount));
-                            if(r != null) {
-                                // we can't control which thread will return
-                                // first, but the expected still must be within
-                                // the number of threads range
-                                Assert.assertTrue(r.intValue()<=nRead.get()+nReaders+1);
-                                nRead.incrementAndGet();
-                            }
-                        }
-                    } catch(InterruptedException ex) {
-
-                    }
-                }
-            };
-            t[i].start();
-        }
-        for(int i=0;i<nFeeders;i++) {
-            f[i].join();
-        }
-        for(int i=0;i<nReaders;i++) {
-            t[i].join();
-        }
-
-        Assert.assertEquals(nFed.get(), nRead.get());
-
-
     }
 }
