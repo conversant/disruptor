@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class DisruptorFairSchedulingTest {
 
-    private static final int NTHREAD = 8*Runtime.getRuntime().availableProcessors();
+    private static final int NTHREAD = 4*Runtime.getRuntime().availableProcessors();
 
     private static final Long LONGMSG = Long.valueOf(3663L);
     public static final long TIMEOUT = 20_000L;
     public static final int MIN_PROGRESS = 0;
-    public static final long JOIN_TIMEOUT = 100L;
+    public static final long JOIN_TIMEOUT = 2000L;
     public static final int QUEUE_SZ = 1024;
 
     private BlockingQueue<Long> msgQueue;

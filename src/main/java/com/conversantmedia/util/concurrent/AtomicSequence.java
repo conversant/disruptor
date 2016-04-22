@@ -112,7 +112,7 @@ public final class AtomicSequence {
      * commit the change to the sequence
      */
     public void commit() {
-        sequence.lazySet(cursor.get());
+        sequence.set(cursor.get());
         sequenceCache.value = sequence.get();
     }
 

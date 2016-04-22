@@ -134,7 +134,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                             stackNotEmptyCondition.signal();
                             return true;
                         } finally {
-                            this.stackTop.lazySet(stackTop+1);
+                            this.stackTop.set(stackTop+1);
                         }
                     } else {
                         return false;
@@ -197,7 +197,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                             stackNotFullCondition.signal();
                             return n;
                         } finally {
-                            this.stackTop.lazySet(lastRef);
+                            this.stackTop.set(lastRef);
                         }
                     } else {
                         return null;
@@ -288,7 +288,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                         stackNotFullCondition.signal();
                         return;
                     } finally {
-                        this.stackTop.lazySet(0);
+                        this.stackTop.set(0);
                     }
                 } else {
                     return;

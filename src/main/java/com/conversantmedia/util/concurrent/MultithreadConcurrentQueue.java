@@ -82,8 +82,12 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final PaddedLong tailCache = new PaddedLong(0L);
     protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
 
+    long p1, p2, p3, p4, p5, p6, p7, p8;
+
     // a ring buffer representing the queue
     protected final E[] buffer;
+
+    long p9, p10, p11, p12, p13, p14, p15, p16;
 
     // the sequence number of the start of the queue
     protected final AtomicLong head =  new PaddedAtomicLong(0L);
@@ -133,7 +137,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return true;
                     } finally {
-                        tail.lazySet(tailNext);
+                        tail.set(tailNext);
                     }
                 } // else - sequence misfire, somebody got our spot, try again
             } else {
@@ -166,7 +170,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return pollObj;
                     } finally {
-                        this.head.lazySet(headNext);
+                        this.head.set(headNext);
                     }
                 } // else - somebody else is reading this spot already: retry
             } else {
@@ -211,7 +215,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                 // if we still control the sequence, update and return
                 if(headCursor.compareAndSet(pollPos,  pollPos+nToRead)) {
-                    head.lazySet(pollPos+nToRead);
+                    head.set(pollPos+nToRead);
                     return nToRead;
                 }
             } else {
@@ -223,6 +227,14 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         }
     }
 
+    /**
+     * This implemention is known to be broken if preemption were to occur after
+     * reading the tail pointer.
+     *
+     * Code should not depend on size for a correct result.
+     *
+     * @return int - possibly the size, or possibly any value less than capacity()
+     */
     @Override
     public final int size() {
         // size of the ring
@@ -260,9 +272,9 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                         }
 
                         // advance head to same location as current end
-                        this.head.lazySet(tail+1);
-                        this.tail.lazySet(tail+1);
-                        headCursor.lazySet(tail + 1);
+                        this.head.set(tail+1);
+                        this.tail.set(tail+1);
+                        headCursor.set(tail + 1);
 
                         return;
                     }
@@ -282,4 +294,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         return false;
     }
 
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13+p14+p15+p16;
+    }
 }

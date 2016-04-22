@@ -366,13 +366,13 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
                         if (n > 0) {
                             // head is advanced once for each
-                            headCursor.lazySet(head + n);
+                            headCursor.set(head + n);
 
                             // undo the change to tail state - this was only
                             // done to block others from changing
-                            tailCursor.lazySet(tail);
+                            tailCursor.set(tail);
                             // tail is unchanged
-                            this.head.lazySet(head+n);
+                            this.head.set(head+n);
 
 
                             // queue is not full now
@@ -382,8 +382,8 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
                         } else {
                             // no change to the queue - unblock others
-                            tailCursor.lazySet(tail);
-                            headCursor.lazySet(head);
+                            tailCursor.set(tail);
+                            headCursor.set(head);
                             return false;
                         }
                     }

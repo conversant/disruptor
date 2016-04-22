@@ -30,8 +30,8 @@ import com.conversantmedia.util.estimation.Percentile;
 public class ConcurrentQueuePerformanceTest {
 
     // increase this number for a legit performance test
-    static final int NRUN = 20*1*1024;
-    static final int NTHREAD = 4;
+    static final int NRUN = 16*1*1024;
+    static final int NTHREAD = 32;
 
     private static final Integer INTVAL = 173;
     private static final long[] offerPctTimes = new long[NRUN];
@@ -244,6 +244,105 @@ public class ConcurrentQueuePerformanceTest {
         for(int t=0; t<NTHREAD; t++) {
             thread[t].join();
         }
+    }
+
+    @Ignore
+    public static void testNxNThreadPerformance(final ConcurrentQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+        for(int c=0; c<3; c++) {
+            System.gc();
+            runNxNThreadPerformance(rb);
+        }
+    }
+
+    @Ignore
+    public static void runNxNThreadPerformance(final ConcurrentQueue<Integer> rb) throws InterruptedException, Percentile.InsufficientSamplesException {
+
+        final int size = 1024;
+        final long mask = size-1;
+
+        final Percentile offerPct = new Percentile();
+        final Percentile pollPct = new Percentile();
+        final Percentile totPct = new Percentile();
+
+        final Thread[] thread = new Thread[NTHREAD*2];
+
+        for(int t = 0; t<NTHREAD; t++) {
+            thread[t] = new Thread(() -> {
+                final int blockSize = NRUN/NTHREAD;;
+                final long[] offerTimes = new long[blockSize];
+                int i = blockSize;
+                do {
+                    final long startTime = System.nanoTime();
+
+                    while(!rb.offer(first1024[(int) (startTime>>10 & mask)])) {
+                        Thread.yield();
+                    }
+                    offerTimes[i-1] = System.nanoTime()-startTime;
+                } while(i-->1);
+
+                synchronized (offerPct) {
+                    for (int d = 0; d < offerTimes.length; d++) {
+                        final float time = offerTimes[d] / 1e3F;
+                        if(time < 1F) {
+                            offerPct.add(time);
+                        }
+                    }
+                }
+
+            });
+            thread[t].start();
+        }
+
+
+        for(int t=NTHREAD; t<2*NTHREAD; t++) {
+            thread[t] = new Thread(() -> {
+                Integer result;
+                final int blockSize = NRUN/NTHREAD;
+                int i = blockSize;
+                final long[] pollTimes = new long[blockSize];
+                final long[] totTimes  = new long[blockSize];
+
+                do {
+                    final long startTime = System.nanoTime();
+
+                    while ((result = rb.poll()) == null) {
+                        Thread.yield();
+                    }
+
+                    final int diff = (int) (System.nanoTime() >> 10 & mask) - result.intValue();
+
+                    totTimes[i - 1] = diff;
+
+                    pollTimes[i - 1] = System.nanoTime() - startTime;
+                } while (i-- > 1);
+
+                synchronized (pollPct) {
+                    for (int d = 0; d < pollTimes.length; d++) {
+                        final float time = pollTimes[d] / 1e3F;
+                        if(time < 1F) {
+                            pollPct.add(time);
+                        }
+                    }
+                }
+
+                synchronized (totPct) {
+                    for (int d = 0; d < totTimes.length; d++) {
+                        if (totTimes[d] > 0F && totTimes[d] < 100.0) {
+                            totPct.add(totTimes[d]);
+                        }
+                    }
+                }
+            });
+            thread[t].start();
+        }
+
+        for(int t=0; t<NTHREAD; t++) {
+            thread[t].join();
+        }
+
+        Percentile.print(System.out, "offer (us):", offerPct);
+        Percentile.print(System.out, "poll (us): ", pollPct);
+        Percentile.print(System.out, "tot (~us): ", totPct);
     }
 
 

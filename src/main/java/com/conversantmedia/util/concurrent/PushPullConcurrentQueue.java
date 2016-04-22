@@ -39,7 +39,12 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final AtomicLong tail = new PaddedAtomicLong(0L);
     protected final PaddedLong tailCache = new PaddedLong();
 
+    long p1, p2, p3, p4, p5, p6, p7, p8;
+
     protected final E[] buffer;
+
+    long p9, p10, p11, p12, p13, p14, p15, p16;
+
 
     protected final AtomicLong head = new PaddedAtomicLong(0L);
     protected final PaddedLong headCache = new PaddedLong();
@@ -62,7 +67,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
                 final int dx = (int) (tail & mask);
                 buffer[dx] = e;
-                this.tail.lazySet(tail+1L);
+                this.tail.set(tail+1L);
                 return true;
             } else {
                 return false;
@@ -80,7 +85,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             final E e = buffer[dx];
             buffer[dx] = null;
 
-            this.head.lazySet(head+1L);
+            this.head.set(head+1L);
             return e;
         } else {
             return null;
@@ -100,7 +105,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             buffer[dx] = null;
         }
 
-        this.head.lazySet(headCache.value+n);
+        this.head.set(headCache.value+n);
 
         return n;
     }
@@ -110,7 +115,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
         for(int i=0; i<buffer.length; i++) {
             buffer[i] = null;
         }
-        head.lazySet(tail.get());
+        head.set(tail.get());
     }
 
 
@@ -119,6 +124,14 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
         return buffer[(int)(head.get() & mask)];
     }
 
+    /**
+     * This implemention is known to be broken if preemption were to occur after
+     * reading the tail pointer.
+     *
+     * Code should not depend on size for a correct result.
+     *
+     * @return int - possibly the size, or possibly any value less than capacity()
+     */
     @Override
     public final int size() {
         return (int)Math.max(tail.get() - head.get(), 0);
@@ -145,5 +158,9 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
         }
         return false;
+    }
+
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13+p14+p15+p16;
     }
 }

@@ -143,6 +143,28 @@ public class DisruptorBlockingQueueTest {
     }
 
     @Test
+    public void inOutIn() {
+        final int cap = 8;
+        BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<>(cap);
+
+        Assert.assertNull(dbq.poll());
+
+        for(int i=0; i<10; i++) {
+            for(int j=0; j<cap; j++) {
+                dbq.offer(j);
+            }
+
+            Assert.assertFalse(dbq.offer(1000));
+
+            for(int j=0; j<cap; j++) {
+                Assert.assertEquals(Integer.valueOf(j), dbq.poll());
+            }
+
+            Assert.assertNull(dbq.poll());
+        }
+    }
+
+    @Test
     public void testElement() {
         final int cap = 10;
         BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(cap);
@@ -485,7 +507,7 @@ public class DisruptorBlockingQueueTest {
 
         for(int i=0; i<cap; i++) {
 
-            dbq.offer(Integer.valueOf(i));
+            Assert.assertTrue(dbq.offer(Integer.valueOf(i)));
         }
 
         Object[] objArray = dbq.toArray();

@@ -49,7 +49,7 @@ interface Condition {
      * progressively transition from spin to yield over time
      */
     static int progressiveYield(final int n) {
-        if(n > 128) {
+        if(n > 100) {
             if(n<1000) {
                 // "randomly" yield 1:8
                 if((n & 0x7) == 0) {
