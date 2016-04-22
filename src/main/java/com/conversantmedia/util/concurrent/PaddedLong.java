@@ -24,8 +24,8 @@ package com.conversantmedia.util.concurrent;
  * Created by jcairns on 5/28/14.
  */
 final class PaddedLong {
-    public long p1, p2, p3, p4, p5, p6;
-    public long value=0, p7, p8, p9, p10, p11, p12;
+    public long p1, p2, p3, p4, p5, p6, p7;
+    public long value=0L;
 
     public PaddedLong() {
     }
@@ -35,7 +35,7 @@ final class PaddedLong {
     }
 
     public long sumToAvoidOptimization() {
-        return value+p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12;
+        return value+p1+p2+p3+p4+p5+p6+p7;
     }
 
     public String toString() {

@@ -23,19 +23,19 @@ package com.conversantmedia.util.concurrent;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Martin Thompson's approach to avoid false cache line sharing
+ * Avoid false cache line sharing
  *
  * Created by jcairns on 5/28/14.
  */
 final class PaddedAtomicLong extends AtomicLong {
-    private long p1, p2, p3, p4, p5, p6;
+    private long p1, p2, p3, p4, p5, p6, p7;
 
     public PaddedAtomicLong(final long init) {
         super(init);
     }
 
     public long sumToAvoidOptimization() {
-        return p1+p2+p3+p4+p5+p6;
+        return p1+p2+p3+p4+p5+p6+p7;
     }
 
     public String toString() {
