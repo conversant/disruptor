@@ -21,3 +21,10 @@ Maven users can incorporate Conversant Disruptor the usual way.
   <version>1.2.7</version>
 </dependency>
 ```
+
+## Discussion Forum
+
+Conversant Disruptor has a google group so you can follow releases and changes:   
+
+https://groups.google.com/forum/#!forum/conversant-disruptor
+
