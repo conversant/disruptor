@@ -14,8 +14,8 @@
   <inceptionYear>2012</inceptionYear>
   
   <organization>
-    <name>Conversant</name>
-    <url>http://www.conversantmedia.com</url>
+    <name>Conversant Engineering</name>
+    <url>http://engineering.conversantmedia.com</url>
   </organization>
   
   <developers>
@@ -23,7 +23,7 @@
       <name>John Cairns</name>
       <email>john@2ad.com</email>
       <organization>Conversant, Inc.</organization>
-      <organizationUrl>http://www.conversantmedia.com</organizationUrl>
+      <organizationUrl>http://engineering.conversantmedia.com</organizationUrl>
     </developer>
   </developers>
 

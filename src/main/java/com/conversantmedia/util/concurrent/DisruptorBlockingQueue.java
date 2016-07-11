@@ -171,12 +171,10 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
     @Override
     public final boolean offer(E e) {
-        if (super.offer(e)) {
+        try {
+            return super.offer(e);
+        } finally {
             queueNotEmptyCondition.signal();
-            return true;
-        } else {
-            queueNotEmptyCondition.signal();
-            return false;
         }
     }
 

@@ -10,7 +10,7 @@ Simply run the maven build to build and use the package.
 
 ```$ mvn -U clean package```
 
-# Conversant Disruptor is now on Maven Central
+# Conversant Disruptor is on Maven Central
 
 Maven users can incorporate Conversant Disruptor the usual way.
 
