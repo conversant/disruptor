@@ -31,7 +31,7 @@ import java.util.Arrays;
  * Created by jcairns on 5/28/14.
  */
 public class Percentile {
-    private static float[] DEFAULT_PERCENTILE = { 0.05F, 0.25F, 0.5F, 0.683F, 0.75F, 0.85F, 0.954F};
+    private static float[] DEFAULT_PERCENTILE = { 0.05F, 0.5F, 0.683F, 0.75F, 0.85F, 0.954F, 0.99F};
 
     private final float[] quantiles;
 
