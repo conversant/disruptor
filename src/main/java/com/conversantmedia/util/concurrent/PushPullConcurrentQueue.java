@@ -39,12 +39,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final AtomicLong tail = new PaddedAtomicLong(0L);
     protected final PaddedLong tailCache = new PaddedLong();
 
-    long p1, p2, p3, p4, p5, p6, p7, p8;
-
     protected final E[] buffer;
-
-    long p9, p10, p11, p12, p13, p14, p15, p16;
-
 
     protected final AtomicLong head = new PaddedAtomicLong(0L);
     protected final PaddedLong headCache = new PaddedLong();
@@ -158,9 +153,5 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
         }
         return false;
-    }
-
-    long sumToAvoidOptimization() {
-        return p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13+p14+p15+p16;
     }
 }

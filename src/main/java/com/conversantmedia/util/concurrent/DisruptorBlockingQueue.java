@@ -442,7 +442,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
     private final boolean isFull() {
         final long queueStart = tail.get() - size;
-        return ((headCache.value == queueStart) && (headCache.value = head.get()) == queueStart);
+        return head.get() == queueStart;
     }
 
     private final class RingIter implements Iterator<E> {

@@ -82,12 +82,8 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final PaddedLong tailCache = new PaddedLong(0L);
     protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
 
-    long p1, p2, p3, p4, p5, p6, p7, p8;
-
     // a ring buffer representing the queue
     protected final E[] buffer;
-
-    long p9, p10, p11, p12, p13, p14, p15, p16;
 
     // the sequence number of the start of the queue
     protected final AtomicLong head =  new PaddedAtomicLong(0L);
@@ -294,7 +290,4 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         return false;
     }
 
-    long sumToAvoidOptimization() {
-        return p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13+p14+p15+p16;
-    }
 }
