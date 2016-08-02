@@ -12,7 +12,7 @@ public abstract class AbstractSpinningCondition implements Condition {
 
         final Thread t = Thread.currentThread();
 
-        while(test() && test() && test() && test() && expires>timeNow && !t.isInterrupted()) {
+        while(test() && expires>timeNow && !t.isInterrupted()) {
             timeNow = System.nanoTime();
         }
 
@@ -25,7 +25,7 @@ public abstract class AbstractSpinningCondition implements Condition {
     public void await() throws InterruptedException {
         final Thread t = Thread.currentThread();
 
-        while(test() && test() && test() && test() && !t.isInterrupted()) {
+        while(test() && !t.isInterrupted()) {
             ;
         }
 
