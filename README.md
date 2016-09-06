@@ -18,7 +18,8 @@ Maven users can incorporate Conversant Disruptor the usual way.
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.7</version>
+  <version>1.2.8</version>
+  <classifier>javadoc</classifier>
 </dependency>
 ```
 
