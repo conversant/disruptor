@@ -5,7 +5,7 @@
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.8-JDK7-SNAPSHOT</version>
+  <version>1.2.8-JDK7</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://github.com/conversant/disruptor</url>
   <description>Conversant Disruptor - very low latency Java
