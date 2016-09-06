@@ -51,7 +51,7 @@ public class MultithreadConcurrentQueueTest {
 
     @Before
     public void setup() {
-        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(1024));
+        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(1024));
 
         queue = new MultithreadConcurrentQueue<>(1024);
 
@@ -118,30 +118,34 @@ public class MultithreadConcurrentQueueTest {
     public void testManyPoll() {
         final AtomicReference<Integer> nextOne = new AtomicReference<>(a1);
         final int NUM_POLLERS = 5;
-        final Runnable task = () -> {
-            while(c1+c2+c3+c4+c5 < NUM_POLLERS*TEST_SIZE) {
-                Integer a = queue.poll();
-                while(a == null) {
-                    a = queue.poll();
-                }
+        final Runnable task = new Runnable() {
 
-                while(nextOne.get() != a) Thread.yield();
+            @Override
+            public void run() {
+                while (c1 + c2 + c3 + c4 + c5 < NUM_POLLERS * TEST_SIZE) {
+                    Integer a = queue.poll();
+                    while (a == null) {
+                        a = queue.poll();
+                    }
 
-                if(a == a1) {
-                    c1++;
-                    nextOne.set(a2);
-                } else if(a == a2) {
-                    c2++;
-                    nextOne.set(a3);
-                } else if(a == a3) {
-                    c3++;
-                    nextOne.set(a4);
-                } else if(a == a4) {
-                    c4++;
-                    nextOne.set(a5);
-                } else if(a == a5) {
-                    c5++;
-                    nextOne.set(a1);
+                    while (nextOne.get() != a) Thread.yield();
+
+                    if (a == a1) {
+                        c1++;
+                        nextOne.set(a2);
+                    } else if (a == a2) {
+                        c2++;
+                        nextOne.set(a3);
+                    } else if (a == a3) {
+                        c3++;
+                        nextOne.set(a4);
+                    } else if (a == a4) {
+                        c4++;
+                        nextOne.set(a5);
+                    } else if (a == a5) {
+                        c5++;
+                        nextOne.set(a1);
+                    }
                 }
             }
         };

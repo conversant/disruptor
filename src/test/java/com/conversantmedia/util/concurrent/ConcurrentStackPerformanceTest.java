@@ -15,16 +15,21 @@ public class ConcurrentStackPerformanceTest {
     public void testStackPerformance() throws InterruptedException {
         for(int c=0; c<6; c++) {
             System.gc();
-            runRate(new ConcurrentStack<>(1024));
+            runRate(new ConcurrentStack<Integer>(1024));
         }
     }
 
     @Ignore
-    private static void runRate(Stack<Integer> stack) throws InterruptedException {
-        final Thread thread = new Thread(() -> {
-            for(int i=0; i<NRUN; i++) {
-                while(!stack.push(INTVAL)) {
-                    Thread.yield();;
+    private static void runRate(final Stack<Integer> stack) throws InterruptedException {
+        final Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                for(int i=0; i<NRUN; i++) {
+                    while (!stack.push(INTVAL)) {
+                        Thread.yield();
+                        ;
+                    }
                 }
             }
         });

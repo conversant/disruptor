@@ -34,25 +34,25 @@ public class MultithreadConcurrentQueuePerfTest {
     @Test
     public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
         System.out.println("1x1 using MultiThread");
-        ConcurrentQueuePerformanceTest.testPerformance(new MultithreadConcurrentQueue<>(1024));
+        ConcurrentQueuePerformanceTest.testPerformance(new MultithreadConcurrentQueue<Integer>(1024));
     }
 
 
     @Test
     public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
-        ConcurrentQueuePerformanceTest.testRate(new MultithreadConcurrentQueue<>(1024));
+        ConcurrentQueuePerformanceTest.testRate(new MultithreadConcurrentQueue<Integer>(1024));
     }
 
     @Ignore
     public void testNThreadPerformance() throws Percentile.InsufficientSamplesException, InterruptedException {
         System.out.println("NThread in MultiThread");
-        ConcurrentQueuePerformanceTest.testNThreadPerformance(new MultithreadConcurrentQueue<>(1024));
+        ConcurrentQueuePerformanceTest.testNThreadPerformance(new MultithreadConcurrentQueue<Integer>(1024));
     }
 
     @Test
     public void testNxNThreadPerformance() throws Percentile.InsufficientSamplesException, InterruptedException {
         System.out.println("NThread in MultiThread");
-        ConcurrentQueuePerformanceTest.testNxNThreadPerformance(new MultithreadConcurrentQueue<>(1024));
+        ConcurrentQueuePerformanceTest.testNxNThreadPerformance(new MultithreadConcurrentQueue<Integer>(1024));
     }
 
 }

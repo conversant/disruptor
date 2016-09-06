@@ -174,7 +174,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
             } else {
 
                 // wait for available capacity and try again
-                if (!Condition.waitStatus(timeout, unit, queueNotFullCondition)) return false;
+                if (!MultithreadConcurrentQueue.waitStatus(timeout, unit, queueNotFullCondition)) return false;
             }
         }
     }
@@ -201,7 +201,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
                 return pollObj;
             } else {
                 // wait for the queue to have at least one element or time out
-                if(!Condition.waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
+                if(!MultithreadConcurrentQueue.waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
             }
         }
     }

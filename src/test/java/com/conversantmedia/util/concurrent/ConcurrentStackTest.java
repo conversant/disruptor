@@ -58,18 +58,35 @@ public class ConcurrentStackTest {
 
 
         for (int i=0; i < 100000; i++) {
-            executor.execute(() -> {
-                if(stack.pop() != null) {
-                    popCount.incrementAndGet();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    if (stack.pop() != null)
+
+                    {
+                        popCount.incrementAndGet();
+                    }
                 }
             });
-            executor.execute(() -> stack.push(1));
+
+            executor.execute(new Runnable() {
+
+                @Override
+                public void run() {
+                    stack.push(1);
+                }
+            });
         }
 
+
         while (popCount.get() < addCount.get()) {
-            executor.execute(() -> {
-                assertNotNull(stack.pop());
-                popCount.incrementAndGet();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    assertNotNull(stack.pop());
+                    popCount.incrementAndGet();
+                }
             });
         }
     }
@@ -87,13 +104,16 @@ public class ConcurrentStackTest {
 
         for(int i=0; i<1024; i++) {
             final Integer bottom = i;
-            executor.execute(() -> {
-                        while(!bottom.equals(stack.peek()))
-                            Thread.yield();
-                        stack.pop();
-                        nFound.incrementAndGet();
-                    }
-            );
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    while (!bottom.equals(stack.peek()))
+                        Thread.yield();
+                    stack.pop();
+                    nFound.incrementAndGet();
+                }
+            });
         }
 
         while(nFound.get() < 1024) Thread.yield();
@@ -121,12 +141,15 @@ public class ConcurrentStackTest {
             iStack.pushInterruptibly(i);
         }
 
-        final Thread t = new Thread(() -> {
-            try {
-                Thread.currentThread().interrupt();
-                iStack.pushInterruptibly(129);
-            } catch (InterruptedException e) {
-                expectInterrupt.set(true);
+        final Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.currentThread().interrupt();
+                    iStack.pushInterruptibly(129);
+                } catch (InterruptedException e) {
+                    expectInterrupt.set(true);
+                }
             }
         });
 
@@ -193,12 +216,16 @@ public class ConcurrentStackTest {
 
 
 
-        final Thread t = new Thread(() -> {
-            try {
-                Thread.currentThread().interrupt();
-                iStack.popInterruptibly();
-            } catch (InterruptedException e) {
-                expectInterrupt.set(true);
+        final Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.currentThread().interrupt();
+                    iStack.popInterruptibly();
+                } catch (InterruptedException e) {
+                    expectInterrupt.set(true);
+                }
             }
         });
 

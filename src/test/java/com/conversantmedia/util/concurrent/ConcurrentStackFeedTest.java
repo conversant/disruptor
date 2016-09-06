@@ -26,23 +26,30 @@ public class ConcurrentStackFeedTest {
 
         for(int i=0; i<NTHREAD; i++) {
             final int threadOff = i*NMANY;
-            final Thread feedThread = new Thread(() -> {
-                for(int j = 0; j<NMANY; j++) {
-                    while(!iStack.push(threadOff+j)) {
-                        Thread.yield();
+            final Thread feedThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for(int j = 0; j<NMANY; j++) {
+                        while(!iStack.push(threadOff+j)) {
+                            Thread.yield();
+                        }
                     }
                 }
             });
             feedThread.start();
 
-            final Thread getThread = new Thread(() -> {
-                while(count.get()<totes) {
-                    final Integer v = iStack.pop();
-                    if(v == null) {
-                        Thread.yield();
-                    } else {
-                        flagSet[v.intValue()] = true;
-                        count.getAndIncrement();
+            final Thread getThread = new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    while (count.get() < totes) {
+                        final Integer v = iStack.pop();
+                        if (v == null) {
+                            Thread.yield();
+                        } else {
+                            flagSet[v.intValue()] = true;
+                            count.getAndIncrement();
+                        }
                     }
                 }
             });

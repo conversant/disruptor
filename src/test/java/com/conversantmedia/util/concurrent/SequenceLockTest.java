@@ -58,25 +58,29 @@ public class SequenceLockTest {
         final ExecutorService executor = Executors.newFixedThreadPool(nThread);
         final SequenceLock lock = new SequenceLock();
         for(int i=0; i<nThread; i++) {
-            executor.execute(() -> {
-                        while(testVal<max) {
-                            final long writeLock = lock.tryWriteLock();
-                            if(writeLock>0) {
-                                Assert.assertEquals(lastVal+1, testVal);
-                                lastVal = testVal;
-                                testVal = testVal+1;
-                                lock.unlock(writeLock);
-                            } else {
-                                int lv, tv;
-                                final long readLock = lock.readLock();
-                                lv = lastVal;
-                                tv = testVal;
-                                if(lock.readLockHeld(readLock)) {
-                                    Assert.assertEquals(lv+1, tv);
-                                }
-                            }
-                        }
-                    }
+            executor.execute(new Runnable() {
+                                 @Override
+                                 public void run() {
+
+                                     while (testVal < max) {
+                                         final long writeLock = lock.tryWriteLock();
+                                         if (writeLock > 0) {
+                                             Assert.assertEquals(lastVal + 1, testVal);
+                                             lastVal = testVal;
+                                             testVal = testVal + 1;
+                                             lock.unlock(writeLock);
+                                         } else {
+                                             int lv, tv;
+                                             final long readLock = lock.readLock();
+                                             lv = lastVal;
+                                             tv = testVal;
+                                             if (lock.readLockHeld(readLock)) {
+                                                 Assert.assertEquals(lv + 1, tv);
+                                             }
+                                         }
+                                     }
+                                 }
+                             }
             );
         }
 
