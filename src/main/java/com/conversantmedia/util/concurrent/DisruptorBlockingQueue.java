@@ -400,10 +400,13 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
+        boolean rc = false;
         for (final E e : c) {
-            if (!offer(e)) return false;
+            if (offer(e)) {
+                rc = true;
+            };
         }
-        return true;
+        return rc;
     }
 
     @Override

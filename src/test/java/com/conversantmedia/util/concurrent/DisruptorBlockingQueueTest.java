@@ -272,7 +272,7 @@ public class DisruptorBlockingQueueTest {
         Assert.assertTrue(hasValCap);
     }
 
-    @Ignore // timing test not suitble for build
+    @Ignore // timing test not suitable for build
     public void pollTimeIsAccurate() throws InterruptedException {
         final DisruptorBlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(256);
 
@@ -632,6 +632,34 @@ public class DisruptorBlockingQueueTest {
         }
         dbq.addAll(si);
         Assert.assertEquals(dbq.size(), 128);
+    }
+
+    @Test
+    public void testAddAllReturn() {
+
+        final int cap = 8;
+        final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(cap);
+
+        final Set<Integer> set = new HashSet();
+
+        for(int i=0; i<8; i++) {
+            set.add(i);
+        }
+
+        Assert.assertTrue(dbq.addAll(set));
+
+        Integer iVal = dbq.poll();
+        while(iVal != null) {
+            Assert.assertTrue(set.contains(iVal));
+            iVal = dbq.poll();
+        }
+
+        for(int i=0; i<20; i++) {
+            set.add(i);
+        }
+
+        // at least one will fail
+        Assert.assertTrue(dbq.addAll(set));
     }
 
     @Test
