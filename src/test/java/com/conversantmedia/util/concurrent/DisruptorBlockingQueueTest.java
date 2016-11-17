@@ -108,7 +108,16 @@ public class DisruptorBlockingQueueTest {
 
     }
 
+    @Test
+    public void offerTooManyTest() {
+        final DisruptorBlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(8);
 
+        for(int i=0; i<16; i++) {
+            dbq.offer(i);
+        }
+
+        Assert.assertEquals(dbq.capacity(), dbq.size());
+    }
 
     @Test
     public void remove() {

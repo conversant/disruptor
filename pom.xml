@@ -75,7 +75,7 @@
       <plugins>
 	<plugin>
 	  <artifactId>maven-compiler-plugin</artifactId>
-	  <version>3.1</version>
+	  <version>3.6.0</version>
 	  <inherited>true</inherited>
 	  <configuration>
 	    <source>${jdk.version}</source>
@@ -144,6 +144,12 @@
 	    </execution>
 	  </executions>
 	</plugin>
+        <plugin>
+          <artifactId>maven-jar-plugin</artifactId>
+          <configuration>
+            <classifier>${jdkClassifier}</classifier>
+          </configuration>
+        </plugin>        
 	<plugin>
 	  <artifactId>maven-resources-plugin</artifactId>
 	  <version>2.6</version>
@@ -204,6 +210,36 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>jdk7</id>
+      <activation>
+        <jdk>1.7</jdk>
+      </activation>
+      <properties>
+        <jdkClassifier>jdk7</jdkClassifier>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <jdkClassifier>jdk8</jdkClassifier>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk9</id>
+      <activation>
+        <jdk>1.9</jdk>
+      </activation>
+      <properties>
+        <jdkClassifier>jdk9</jdkClassifier>
+      </properties>
+    </profile>
+  </profiles>
 
   <dependencies>
     <dependency>

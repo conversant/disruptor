@@ -83,7 +83,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author John Cairns {@literal <john@2ad.com>} Date: 4/25/12 Time: 12:00 PM
  */
-public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<E> implements Serializable, Iterable<E>, Collection<E>, BlockingQueue<E>, Queue<E>, ConcurrentQueue<E> {
+public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<E> implements Serializable, Iterable<E>, Collection<E>, BlockingQueue<E>, Queue<E> {
 
     // locking objects used for independent locking
     // of not empty, not full status, for java BlockingQueue support

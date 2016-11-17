@@ -23,6 +23,8 @@ package com.conversantmedia.util.concurrent;
 import java.text.DecimalFormat;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
@@ -39,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class DisruptorPerformanceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(DisruptorPerformanceTest.class);
-    private static final int MAXCAP = 1024;
+    private static final int MAXCAP = 512;
     // increase this number for a better performance test
     private static final int NFEED = 4*1*MAXCAP;
 
@@ -76,7 +78,7 @@ public class DisruptorPerformanceTest {
         testNFeederByMReader(queue, 1, 1, false);
     }
 
-    @Test
+    @Ignore
     public synchronized  void testLinkedXferOneXOne() throws InterruptedException {
         final BlockingQueue<Integer> queue = new LinkedTransferQueue<Integer>();
 
@@ -88,13 +90,25 @@ public class DisruptorPerformanceTest {
 
     @Test
     public synchronized  void testDisruptorFourXFour() throws InterruptedException {
-        final DisruptorBlockingQueue<Integer> queue = new DisruptorBlockingQueue<Integer>(MAXCAP);
+        final DisruptorBlockingQueue<Integer> queue = new DisruptorBlockingQueue<>(MAXCAP);
 
         for(int i=0; i<3; i++) {
             LOG.info("Disruptor 4x4 Poll");
             testNFeederByMReader(queue, 4, 4, true);
             LOG.info("Disruptor 4x4 Take");
             testNFeederByMReader(queue, 4, 4, false);
+        }
+    }
+
+    @Test
+    public synchronized  void testDisruptorEightXEight() throws InterruptedException {
+        final DisruptorBlockingQueue<Integer> queue = new DisruptorBlockingQueue<>(MAXCAP);
+
+        for(int i=0; i<3; i++) {
+            LOG.info("Disruptor 4x4 Poll");
+            testNFeederByMReader(queue, 8, 8, true);
+            LOG.info("Disruptor 4x4 Take");
+            testNFeederByMReader(queue, 8, 8, false);
         }
     }
 
@@ -137,15 +151,22 @@ public class DisruptorPerformanceTest {
     @Ignore
     private static synchronized void testNFeederByMReader(final BlockingQueue<Integer> queue, final int n, final int m, final boolean pollReader) throws InterruptedException {
 
-        DecimalFormat df = new DecimalFormat("#.##");
+        final DecimalFormat df = new DecimalFormat("#.##");
+
+        final ExecutorService executor = Executors.newFixedThreadPool(n+m);
+
 
         int readCount = 0;
         int writeCount = 0;
 
         final Feeder[] feeder = new Feeder[n];
         final Reader[] reader = new Reader[m];
+
+        final long startNanos = System.nanoTime();
+
         for(int i=0; i<n; i++) {
             feeder[i] = new Feeder(queue);
+            executor.execute(feeder[i]);
         }
 
         for(int i=0; i<m; i++) {
@@ -153,57 +174,23 @@ public class DisruptorPerformanceTest {
                 reader[i] = new PollReader(queue);
             else
                 reader[i] = new TakeReader(queue);
+
+            executor.execute(reader[i]);
         }
 
-        final long startNanos = System.nanoTime();
-
-        if(n<m) {
-            for(int i=0; i<n; i++) {
-                feeder[i].start();
-                reader[i].start();
-            }
-
-            for(int i=n; i<m; i++) {
-                reader[i].start();
-            }
-        } else {
-            for(int i=0; i<m; i++) {
-                feeder[i].start();
-                reader[i].start();
-            }
-
-            for(int i=m; i<n; i++) {
-                feeder[i].start();
-            }
-
-        }
-
-        // wait for feeding to finish
+        // finish feeding
         for(int i=0; i<n; i++)
-            while(feeder[i].isAlive()) Thread.yield();
+            while(feeder[i].isAlive) Thread.yield();
 
         // reap readers
-        for(int i=0; i<m; i++) {
-            if(!pollReader) {
-                // make sure no takers are waiting for something to eat
-                while(reader[i].isAlive()) {
-                    queue.offer(Integer.valueOf(0));
-                }
-            }
-
-            reader[i].join();
-
-        }
+        for(int i=0; i<m; i++)
+            while(reader[i].isAlive) Thread.yield();
 
         for(int i=0; i<reader.length; i++) {
             readCount += reader[i].readCount;
         }
 
         final long runTime = System.nanoTime()-startNanos;
-
-        for(int i=0; i<n; i++) {
-            feeder[i].join();
-        }
 
         for(int i=0; i<feeder.length; i++) {
             writeCount += feeder[0].writeCount;
@@ -213,21 +200,22 @@ public class DisruptorPerformanceTest {
         System.out.println("  Runtime: " + df.format(runTime / 1e3) + "us");
         System.out.println("  Rate: " + df.format(writeCount * 1e6 / runTime) + " feed/ms");
 
+        executor.shutdown();
     }
 
 
 
-    private final static class Feeder extends Thread {
-        private static int nFeeder = 0;
+    private final static class Feeder implements Runnable {
         private final BlockingQueue<Integer> feedQueue;
 
         private int writeCount = 0;
 
-        private static final Integer writeValue = Integer.valueOf(777);
+        volatile boolean isAlive = true;
+
+        static final Integer writeValue = Integer.valueOf(777);
 
         public Feeder(final BlockingQueue<Integer> feedQueue) {
             this.feedQueue = feedQueue;
-            setName("Feeder-"+nFeeder++);
         }
 
         @Override
@@ -238,24 +226,27 @@ public class DisruptorPerformanceTest {
                 // allocate my slot
                 // do feed
                 while(!feedQueue.offer(writeValue)) {
-                    yield();
+                    ;
                 }
 
                 count++;
             }
             writeCount = count;
+
+            isAlive = false;
         }
     }
 
-    private static abstract class Reader extends Thread {
+    private static abstract class Reader implements Runnable {
 
         protected final BlockingQueue<Integer> readQueue;
         private static int nReader = 0;
         protected int readCount = 0;
 
+        volatile boolean isAlive = true;
+
         public Reader(final BlockingQueue<Integer> readQueue) {
             this.readQueue = readQueue;
-            setName("Reader-"+nReader++);
         }
 
     }
@@ -272,16 +263,17 @@ public class DisruptorPerformanceTest {
             int count=0;
             while(count < NFEED) {
                 // we are allowed to read this slot
-                Integer p;
-                while((p=readQueue.poll()) == null) {
+                while(readQueue.poll() != Feeder.writeValue) {
                     // failed try again
-                    yield();
+                    ;
                 }
 
                 count++;
             }
 
             readCount = count;
+
+            isAlive = false;
         }
 
     }
@@ -298,9 +290,9 @@ public class DisruptorPerformanceTest {
             while(count < NFEED) {
                 try {
                     // we are allowed to read this slot
-                    while(readQueue.take() == null) {
+                    while(readQueue.take() != Feeder.writeValue) {
                         // failed try again
-                        yield();
+                        ;
                     }
 
                     count++;
@@ -310,8 +302,9 @@ public class DisruptorPerformanceTest {
                 }
             }
             readCount = count;
-        }
 
+            isAlive = false;
+        }
     }
 
 }
