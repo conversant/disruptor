@@ -20,6 +20,8 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * This implements the CAS approach to lock-free synchronization, in
  * other words a sequence of atomic changes.  Each change is represented by an
@@ -66,13 +68,13 @@ package com.conversantmedia.util.concurrent;
  * Created by jcairns on 9/24/14.
  */
 public final class AtomicSequence {
-    private final PaddedAtomicLong cursor = new PaddedAtomicLong(0L);
-    private final PaddedAtomicLong sequence = new PaddedAtomicLong(0L);
+    private final AtomicLong cursor = new ContendedAtomicLong(0L);
+    private final AtomicLong sequence = new ContendedAtomicLong(0L);
 
     // Locally (L1) cached value of the sequence
     // try to use the value in this cores L1 cache whenever possible
     // rather than reading from memory every time
-    private final PaddedLong       sequenceCache = new PaddedLong(0L);
+    private final ContendedLong sequenceCache = new ContendedLong(0L);
 
 
     /**

@@ -8,8 +8,7 @@
   <version>1.2.9-SNAPSHOT</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://github.com/conversant/disruptor</url>
-  <description>Conversant Disruptor - very low latency Java
-  BlockingQueue</description>
+  <description>Conversant Disruptor - very low latency Java BlockingQueue</description>
   
   <inceptionYear>2012</inceptionYear>
   
@@ -81,6 +80,7 @@
 	    <source>${jdk.version}</source>
 	    <target>${jdk.version}</target>
 	    <encoding>${project.build.sourceEncoding}</encoding>
+            <!-- <executable>/usr/lib/jvm/jdk-9/bin/javac</executable> -->
 	  </configuration>
 	</plugin>
 	<plugin>

@@ -77,18 +77,18 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
 
     // the sequence number of the end of the queue
-    protected final AtomicLong tail = new PaddedAtomicLong(0L);
+    protected final AtomicLong tail = new ContendedAtomicLong(0L);
     // use the value in the L1 cache rather than reading from memory when possible
-    protected final PaddedLong tailCache = new PaddedLong(0L);
-    protected final AtomicLong tailCursor = new PaddedAtomicLong(0L);
+    protected final ContendedLong tailCache = new ContendedLong(0L);
+    protected final AtomicLong tailCursor = new ContendedAtomicLong(0L);
 
     // a ring buffer representing the queue
     protected final E[] buffer;
 
     // the sequence number of the start of the queue
-    protected final AtomicLong head =  new PaddedAtomicLong(0L);
-    protected final PaddedLong headCache = new PaddedLong(0L);
-    protected final AtomicLong headCursor = new PaddedAtomicLong(0L);
+    protected final AtomicLong head =  new ContendedAtomicLong(0L);
+    protected final ContendedLong headCache = new ContendedLong(0L);
+    protected final AtomicLong headCursor = new ContendedAtomicLong(0L);
 
     /**
      * Construct a blocking queue of the given fixed capacity.

@@ -37,7 +37,6 @@ public class MultithreadConcurrentQueuePerfTest {
         ConcurrentQueuePerformanceTest.testPerformance(new MultithreadConcurrentQueue<>(1024));
     }
 
-
     @Test
     public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
         ConcurrentQueuePerformanceTest.testRate(new MultithreadConcurrentQueue<>(1024));

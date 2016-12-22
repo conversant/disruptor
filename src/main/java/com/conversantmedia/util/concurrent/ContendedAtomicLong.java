@@ -20,28 +20,24 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicInteger;
+import sun.misc.Contended;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Avoid false cache line sharing
  *
  * Created by jcairns on 5/28/14.
  */
-final class PaddedAtomicInteger extends AtomicInteger {
-    private volatile long a1, a2, a3, a4, a5, a6, a7;
-    private volatile int p0;
-    private volatile long p1, p2, p3, p4, p5, p6, p7, p8;
+@Contended
+final class ContendedAtomicLong extends AtomicLong {
 
-    public PaddedAtomicInteger(final int init) {
+    public ContendedAtomicLong(final long init) {
         super(init);
     }
 
-    public long sumToAvoidOptimization() {
-        return p0+p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7;
-    }
-
     public String toString() {
-        return Integer.toString(get());
+        return Long.toString(get());
     }
 
 }

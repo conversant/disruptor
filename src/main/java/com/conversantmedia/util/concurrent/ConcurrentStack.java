@@ -37,7 +37,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
     private final AtomicReferenceArray<N> stack;
 
     // representing the top of the stack
-    private final AtomicInteger stackTop = new PaddedAtomicInteger(0);
+    private final AtomicInteger stackTop = new ContendedAtomicInteger(0);
 
     private final SequenceLock  seqLock = new SequenceLock();
 

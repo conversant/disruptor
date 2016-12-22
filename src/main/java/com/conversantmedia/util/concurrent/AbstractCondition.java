@@ -30,6 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 abstract class AbstractCondition implements Condition {
 
     private final ReentrantLock queueLock = new ReentrantLock();
+
     private final java.util.concurrent.locks.Condition condition = queueLock.newCondition();
 
     // wake me when the condition is satisfied, or timeout

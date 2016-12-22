@@ -36,13 +36,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final int size;
     protected final long mask;
 
-    protected final AtomicLong tail = new PaddedAtomicLong(0L);
-    protected final PaddedLong tailCache = new PaddedLong();
+    protected final AtomicLong tail = new ContendedAtomicLong(0L);
+    protected final ContendedLong tailCache = new ContendedLong();
 
     protected final E[] buffer;
 
-    protected final AtomicLong head = new PaddedAtomicLong(0L);
-    protected final PaddedLong headCache = new PaddedLong();
+    protected final AtomicLong head = new ContendedAtomicLong(0L);
+    protected final ContendedLong headCache = new ContendedLong();
 
     public PushPullConcurrentQueue(final int size) {
         int rs = 1;

@@ -42,8 +42,8 @@ abstract class AbstractWaitingCondition implements Condition {
 
     private final AtomicReferenceArray<Thread> waiter = new AtomicReferenceArray<Thread>(MAX_WAITERS);
 
-    private final AtomicInteger waitCount = new PaddedAtomicInteger(0);
-    private final PaddedInt waitCache = new PaddedInt(0);
+    private final AtomicInteger waitCount = new ContendedAtomicInteger(0);
+    private final ContendedInt waitCache = new ContendedInt(0);
 
     /**
      * code below will block until test() returns false

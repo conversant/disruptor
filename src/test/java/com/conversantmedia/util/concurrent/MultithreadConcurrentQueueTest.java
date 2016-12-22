@@ -25,7 +25,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,7 +50,7 @@ public class MultithreadConcurrentQueueTest {
 
     @Before
     public void setup() {
-        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(1024));
+        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new DisruptorBlockingQueue<>(1024));
 
         queue = new MultithreadConcurrentQueue<>(1024);
 
