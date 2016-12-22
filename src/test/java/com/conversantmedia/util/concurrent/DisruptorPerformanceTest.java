@@ -226,7 +226,7 @@ public class DisruptorPerformanceTest {
                 // allocate my slot
                 // do feed
                 while(!feedQueue.offer(writeValue)) {
-                    ;
+                    Condition.onSpinWait();
                 }
 
                 count++;
@@ -265,7 +265,7 @@ public class DisruptorPerformanceTest {
                 // we are allowed to read this slot
                 while(readQueue.poll() != Feeder.writeValue) {
                     // failed try again
-                    ;
+                    Condition.onSpinWait();
                 }
 
                 count++;
@@ -292,7 +292,7 @@ public class DisruptorPerformanceTest {
                     // we are allowed to read this slot
                     while(readQueue.take() != Feeder.writeValue) {
                         // failed try again
-                        ;
+                        Condition.onSpinWait();
                     }
 
                     count++;

@@ -14,6 +14,7 @@ public abstract class AbstractSpinningCondition implements Condition {
 
         while(test() && expires>timeNow && !t.isInterrupted()) {
             timeNow = System.nanoTime();
+            Condition.onSpinWait();
         }
 
         if(t.isInterrupted()) {
@@ -26,7 +27,7 @@ public abstract class AbstractSpinningCondition implements Condition {
         final Thread t = Thread.currentThread();
 
         while(test() && !t.isInterrupted()) {
-            ;
+            Condition.onSpinWait();
         }
 
         if(t.isInterrupted()) {
