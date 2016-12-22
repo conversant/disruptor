@@ -20,9 +20,6 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-
 /*
  * Return true once a condition is satisfied
  * Created by jcairns on 12/11/14.
@@ -44,56 +41,4 @@ interface Condition {
 
     // tell threads waiting on condition to wake up
     void signal();
-
-    /*
-     * progressively transition from spin to yield over time
-     */
-    static int progressiveYield(final int n) {
-        if(n > 100) {
-            if(n<1000) {
-                // "randomly" yield 1:8
-                if((n & 0x7) == 0) {
-                    LockSupport.parkNanos(PARK_TIMEOUT);
-                }
-            } else if(n<MAX_PROG_YIELD) {
-                // "randomly" yield 1:4
-                if((n & 0x3) == 0) {
-                    Thread.yield();
-                }
-            } else {
-                Thread.yield();
-                return n;
-            }
-        }
-        return n+1;
-    }
-
-    /**
-     * Wait for timeout on condition
-     *
-     * @param timeout - the amount of time in units to wait
-     * @param unit - the time unit
-     * @param condition - condition to wait for
-     * @return boolean - true if status was detected
-     * @throws InterruptedException - on interrupt
-     */
-    static boolean waitStatus(final long timeout, final TimeUnit unit, final Condition condition) throws InterruptedException {
-        // until condition is signaled
-
-        final long timeoutNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-        final long expireTime = System.nanoTime() + timeoutNanos;
-        // the queue is empty or full wait for something to change
-        while (condition.test()) {
-            final long now = System.nanoTime();
-            if (now > expireTime) {
-                return false;
-            }
-
-            condition.awaitNanos(expireTime - now - PARK_TIMEOUT);
-
-        }
-
-        return true;
-    }
-
 }

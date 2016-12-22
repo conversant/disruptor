@@ -141,7 +141,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                 return false;
             }
 
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -175,7 +175,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
 
             // this is the spin waiting for access to the queue
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -219,7 +219,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                 return 0;
             }
             // wait for access
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -274,10 +274,10 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return;
                     }
-                    spin = Condition.progressiveYield(spin);
+                    spin = AbstractCondition.progressiveYield(spin);
                 }
             }
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 

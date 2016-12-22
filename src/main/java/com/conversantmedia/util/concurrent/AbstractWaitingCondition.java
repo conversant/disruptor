@@ -74,7 +74,7 @@ abstract class AbstractWaitingCondition implements Condition {
 
                         int spin = 0;
                         while(test() && expires>timeNow && !t.isInterrupted()) {
-                            spin = Condition.progressiveYield(spin);
+                            spin = AbstractCondition.progressiveYield(spin);
                             timeNow = System.nanoTime();
                         }
 
@@ -88,7 +88,7 @@ abstract class AbstractWaitingCondition implements Condition {
                         int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && expires>timeNow) {
                             if(spin < Condition.MAX_PROG_YIELD) {
-                                spin = Condition.progressiveYield(spin);
+                                spin = AbstractCondition.progressiveYield(spin);
                             } else {
                                 LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
                             }
@@ -138,7 +138,7 @@ abstract class AbstractWaitingCondition implements Condition {
                         int spin = 0;
                         // first thread spinning
                         while(test() && !t.isInterrupted()) {
-                            spin = Condition.progressiveYield(spin);
+                            spin = AbstractCondition.progressiveYield(spin);
                         }
 
                         if(t.isInterrupted()) {
@@ -152,7 +152,7 @@ abstract class AbstractWaitingCondition implements Condition {
                         int spin = 0;
                         while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
                             if(spin < Condition.MAX_PROG_YIELD) {
-                                spin = Condition.progressiveYield(spin);
+                                spin = AbstractCondition.progressiveYield(spin);
                             } else {
                                 LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
                             }

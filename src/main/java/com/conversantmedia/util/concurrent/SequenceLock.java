@@ -32,7 +32,7 @@ public class SequenceLock implements OptimisticLock {
                     this.sequence.compareAndSet(sequence, sequence+1)) {
                 return sequence;
             }
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -62,7 +62,7 @@ public class SequenceLock implements OptimisticLock {
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.progressiveYield(spin);
+            AbstractCondition.progressiveYield(spin);
             sequence = tryWriteLock();
         }
 
@@ -80,7 +80,7 @@ public class SequenceLock implements OptimisticLock {
             if(Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException();
             }
-            Condition.progressiveYield(spin);
+            AbstractCondition.progressiveYield(spin);
             sequence = tryWriteLock();
         }
 

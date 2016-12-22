@@ -85,7 +85,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                 return false;
             }
 
-            Condition.waitStatus(time, unit, stackNotFullCondition);
+            AbstractCondition.waitStatus(time, unit, stackNotFullCondition);
         }
         stackNotEmptyCondition.signal();
         return true;
@@ -144,7 +144,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                 }
 
             }
-	        spin = Condition.progressiveYield(spin);
+	        spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -170,7 +170,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                 }
             }
 
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 
@@ -207,7 +207,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                 }
             }
 
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
 
         }
     }
@@ -225,7 +225,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                     return null;
                 }
             }
-            Condition.waitStatus(time, unit, stackNotEmptyCondition);
+            AbstractCondition.waitStatus(time, unit, stackNotEmptyCondition);
         }
     }
 
@@ -295,7 +295,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
                 }
             }
 
-            spin = Condition.progressiveYield(spin);
+            spin = AbstractCondition.progressiveYield(spin);
         }
     }
 

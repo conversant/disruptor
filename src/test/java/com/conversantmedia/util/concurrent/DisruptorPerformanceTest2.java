@@ -54,19 +54,19 @@ public class DisruptorPerformanceTest2 {
     @Test
     public void testPerformance() throws InterruptedException, Percentile.InsufficientSamplesException {
         System.out.println("1x1 using MultiThread");
-        testPerformance(new DisruptorBlockingQueue<>(QUEUE_SIZE));
+        testPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
 
     @Test
     public void testRate() throws InterruptedException, Percentile.InsufficientSamplesException {
-        testRate(new DisruptorBlockingQueue<>(QUEUE_SIZE));
+        testRate(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
     @Test
     public void testNThreadPerformance() throws Percentile.InsufficientSamplesException, InterruptedException {
         System.out.println("NThread in MultiThread");
-        testNThreadPerformance(new DisruptorBlockingQueue<>(QUEUE_SIZE));
+        testNThreadPerformance(new DisruptorBlockingQueue<Integer>(QUEUE_SIZE));
     }
 
     @Ignore
@@ -160,16 +160,20 @@ public class DisruptorPerformanceTest2 {
         final int size = 1024;
 
 
-        final Thread thread = new Thread(() -> {
-            try {
-                int i = NRUN;
-                do {
-                    while(!rb.offer(INTVAL, 50, TimeUnit.MILLISECONDS)) {
-                        Thread.yield();
-                    }
-                } while(i-- != 0);
-            } catch(InterruptedException ex) {
-                System.out.println("Interrupted no data");
+        final Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    int i = NRUN;
+                    do {
+                        while(!rb.offer(INTVAL, 50, TimeUnit.MILLISECONDS)) {
+                            Thread.yield();
+                        }
+                    } while(i-- != 0);
+                } catch(InterruptedException ex) {
+                    System.out.println("Interrupted no data");
+                }
             }
         });
 
