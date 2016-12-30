@@ -299,7 +299,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
         }
     }
 
-    private final boolean isFull() {
+    private boolean isFull() {
         return size == stackTop.get();
     }
 
