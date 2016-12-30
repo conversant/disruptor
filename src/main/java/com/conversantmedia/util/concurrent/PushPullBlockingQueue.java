@@ -299,31 +299,24 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        int numFalses = 0;
-        for (final Object o : c) {
-            if (!remove(o)) numFalses++;
-        }
-        return numFalses > 0;
+         c.forEach(this::remove);
+        return false;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        int numFalses = 0;
 
         for (int i = 0; i < size(); i++) {
             final int headSlot = (int) ((head.get() + i) & mask);
             if (!c.contains(buffer[headSlot])) {
-                if (!remove(buffer[headSlot])) {
-                    numFalses++;
-                } else {
+                if (remove(buffer[headSlot])) {
                     // backtrack one step, we just backed values up at this point
                     i--;
                 }
-
             }
         }
 
-        return numFalses > 0;
+        return false;
     }
 
     @Override
