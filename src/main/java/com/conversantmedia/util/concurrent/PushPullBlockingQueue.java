@@ -331,7 +331,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
         return new RingIter();
     }
 
-    private final boolean isFull() {
+    private boolean isFull() {
         final long queueStart = tail.get() - size;
         return head.get() == queueStart;
     }

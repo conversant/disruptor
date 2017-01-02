@@ -173,7 +173,7 @@ public class Percentile {
         return q[2*m+3];
     }
 
-    private final void addMeasurement(final float x) {
+    private void addMeasurement(final float x) {
         int k=1;
 
         if(x < q[1]) {
