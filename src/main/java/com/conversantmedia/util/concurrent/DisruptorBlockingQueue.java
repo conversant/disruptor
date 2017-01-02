@@ -443,7 +443,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
         return new RingIter();
     }
 
-    private final boolean isFull() {
+    private boolean isFull() {
         final long queueStart = tail.get() - size;
         return head.get() == queueStart;
     }
