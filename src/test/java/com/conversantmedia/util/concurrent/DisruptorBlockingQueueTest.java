@@ -644,7 +644,7 @@ public class DisruptorBlockingQueueTest {
     }
 
     @Test
-    public void testAddAllReturn() {
+    public void testAddAllReturnTrue() {
 
         final int cap = 8;
         final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(cap);
