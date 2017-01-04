@@ -299,19 +299,12 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        if (c.isEmpty()) return false;
         throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        for (int i = 0; i < size(); i++) {
-            final int headSlot = (int) ((head.get() + i) & mask);
-            if (!c.contains(buffer[headSlot])) {
-                throw new UnsupportedOperationException();
-            }
-        }
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override

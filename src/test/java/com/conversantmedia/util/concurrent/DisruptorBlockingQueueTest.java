@@ -22,6 +22,7 @@ package com.conversantmedia.util.concurrent;
 
 import org.junit.*;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -680,6 +681,7 @@ public class DisruptorBlockingQueueTest {
         for(int i=0; i<cap/10; i++) {
             si.add(Integer.valueOf(i));
         }
+
         dbq.addAll(si);
         Assert.assertTrue(dbq.containsAll(si));
 
@@ -687,16 +689,17 @@ public class DisruptorBlockingQueueTest {
         for(int i=1; i<cap/10; i++) {
             ni.add(Integer.valueOf(-i));
         }
+
         dbq.addAll(ni);
         Assert.assertTrue(dbq.containsAll(si));
         Assert.assertTrue(dbq.containsAll(ni));
 
 
-        dbq.removeAll(si);
+        Assert.assertTrue(dbq.removeAll(si));
         Assert.assertTrue(dbq.containsAll(ni));
         Assert.assertFalse(dbq.containsAll(si));
 
-        dbq.removeAll(ni);
+        Assert.assertTrue(dbq.removeAll(ni));
         Assert.assertFalse(dbq.containsAll(ni));
         Assert.assertFalse(dbq.containsAll(si));
     }
@@ -707,20 +710,62 @@ public class DisruptorBlockingQueueTest {
         final int cap = 100;
         final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<Integer>(cap);
 
+        Set<Integer> removedEle = new HashSet<>(cap);
         for(int i=0; i<cap; i++) {
-            dbq.offer(Integer.valueOf(i));
+            final Integer iVal = Integer.valueOf(i);
+            dbq.offer(iVal);
+            removedEle.add(iVal);
         }
 
         Set<Integer> si = new HashSet(cap);
         for(int i=0; i<cap/10; i++) {
-            si.add(Integer.valueOf(i));
+            final Integer iVal = Integer.valueOf(i);
+            si.add(iVal);
+            removedEle.remove(iVal);
         }
 
-        dbq.retainAll(si);
+        Assert.assertTrue(dbq.retainAll(si));
 
         Assert.assertEquals(cap/10, dbq.size());
 
-        dbq.containsAll(si);
+        Assert.assertTrue(dbq.containsAll(si));
+
+        for(final Integer i : removedEle) {
+            Assert.assertFalse(dbq.contains(i));
+        }
+    }
+
+    @Test
+    public void testRemoveAll_with_empty_Collection_returns_false_with_no_exception() {
+
+        final int cap = 8;
+        final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<>(cap);
+
+        final Set<Integer> set = new HashSet();
+
+        for(int i=0; i<cap; i++) {
+            set.add(i);
+        }
+
+        dbq.addAll(set);
+
+        Assert.assertFalse(dbq.removeAll(Collections.emptySet()));
+        Assert.assertEquals(cap, dbq.size());
+    }
+
+    @Test
+    public void testRetainAll_with_equal_Collection_returns_false_with_no_exception() {
+        final int cap = 100;
+        final BlockingQueue<Integer> dbq = new DisruptorBlockingQueue<>(cap);
+        Set<Integer> si = new HashSet(cap);
+
+        for(int i=0; i<cap; i++) {
+            si.add(Integer.valueOf(i));
+            dbq.offer(Integer.valueOf(i));
+        }
+
+        Assert.assertFalse(dbq.retainAll(si));
+        Assert.assertEquals(cap, dbq.size());
     }
 
     @Test

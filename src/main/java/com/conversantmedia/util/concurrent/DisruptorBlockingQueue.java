@@ -336,12 +336,12 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     @Override
     public boolean remove(Object o) {
 
-        for (; ; ) {
+        for (;;) {
             final long head = this.head.get();
             // we are optimistically advancing the head by one
             // if the object does not exist we have to put it back
             if (headCursor.compareAndSet(head, head + 1)) {
-                for (; ; ) {
+                for (;;) {
                     final long tail = this.tail.get();
                     if (tailCursor.compareAndSet(tail, tail + 1)) {
                         // number removed
@@ -411,31 +411,31 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        int numFalses = 0;
+        boolean isChanged = false;
         for (final Object o : c) {
-            if (!remove(o)) numFalses++;
+            if (remove(o))
+                isChanged = true;
         }
-        return numFalses > 0;
+        return isChanged;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        int numFalses = 0;
+        boolean isChanged = false;
 
         for (int i = 0; i < size(); i++) {
             final int headSlot = (int) ((head.get() + i) & mask);
-            if (!c.contains(buffer[headSlot])) {
-                if (!remove(buffer[headSlot])) {
-                    numFalses++;
-                } else {
+            if (buffer[headSlot] != null && !c.contains(buffer[headSlot])) {
+                if (remove(buffer[headSlot])) {
                     // backtrack one step, we just backed values up at this point
                     i--;
+                    isChanged = true;
                 }
 
             }
         }
 
-        return numFalses > 0;
+        return isChanged;
     }
 
     @Override

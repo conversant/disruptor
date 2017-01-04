@@ -621,7 +621,7 @@ public class PushPullBlockingQueueTest {
         Assert.assertFalse(dbq.containsAll(si));
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testRemoveAll_with_empty_Collection_returns_false_with_no_exception() {
 
         final int cap = 8;
@@ -661,7 +661,7 @@ public class PushPullBlockingQueueTest {
         dbq.containsAll(si);
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testRetainAll_with_equal_Collection_returns_false_with_no_exception() {
         final int cap = 100;
         final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
