@@ -37,6 +37,10 @@ final class ContendedLong {
         value=l;
     }
 
+    public long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8;
+    }
+
     public String toString() {
         return Long.toString(value);
     }
