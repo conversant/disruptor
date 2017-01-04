@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -621,24 +620,6 @@ public class PushPullBlockingQueueTest {
         Assert.assertFalse(dbq.containsAll(si));
     }
 
-    @Test
-    public void testRemoveAll_with_empty_Collection_returns_false_with_no_exception() {
-
-        final int cap = 8;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<>(cap);
-
-        final Set<Integer> set = new HashSet();
-
-        for(int i=0; i<cap; i++) {
-            set.add(i);
-        }
-
-        dbq.addAll(set);
-
-        Assert.assertFalse(dbq.removeAll(Collections.emptySet()));
-        Assert.assertEquals(cap, dbq.size());
-    }
-
     @Test(expected = UnsupportedOperationException.class)
     public void testRetainAll() {
 
@@ -659,21 +640,6 @@ public class PushPullBlockingQueueTest {
         Assert.assertEquals(cap/10, dbq.size());
 
         dbq.containsAll(si);
-    }
-
-    @Test
-    public void testRetainAll_with_equal_Collection_returns_false_with_no_exception() {
-        final int cap = 100;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(cap);
-        Set<Integer> si = new HashSet(cap);
-
-        for(int i=0; i<cap; i++) {
-            si.add(Integer.valueOf(i));
-            dbq.offer(Integer.valueOf(i));
-        }
-
-        Assert.assertFalse(dbq.retainAll(si));
-        Assert.assertEquals(cap, dbq.size());
     }
 
     @Test(timeout=30000)
