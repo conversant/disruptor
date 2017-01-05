@@ -29,7 +29,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Added for benchmarking comparison - not for production use
+ * Alternative implementation for benchmarking purposes
  *
  * @author John Cairns {@literal <john@2ad.com>} Date: 4/20/16
  */
