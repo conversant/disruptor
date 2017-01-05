@@ -2,3 +2,9 @@
 1.2.1 - Adding Conversant Stack
 1.2.2 - Condition, Waiting, SpinPolicy, Overall Tuning
 1.2.4 - Bug fixing, Progress and CPU aggressiveness
+1.2.5 - Tuning parking behavior
+1.2.6 - This release is safe for non-intel cpus
+1.2.7 - Slight cleanup and Intel only release
+1.2.8 - Padding changes
+1.2.9 - bug fixes
+1.2.10 - cleanup private final, adding MPMC, @Contended annotation
