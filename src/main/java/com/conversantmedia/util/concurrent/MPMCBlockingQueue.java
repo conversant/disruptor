@@ -178,7 +178,7 @@ public final class MPMCBlockingQueue<E> extends MPMCConcurrentQueue<E> implement
             } else {
 
                 // wait for available capacity and try again
-                if (!Condition.waitStatus(timeout, unit, queueNotFullCondition)) return false;
+                if (!AbstractCondition.waitStatus(timeout, unit, queueNotFullCondition)) return false;
             }
         }
     }
@@ -206,7 +206,7 @@ public final class MPMCBlockingQueue<E> extends MPMCConcurrentQueue<E> implement
                 return pollObj;
             } else {
                 // wait for the queue to have at least one element or time out
-                if(!Condition.waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
+                if(!AbstractCondition.waitStatus(timeout, unit, queueNotEmptyCondition)) return null;
             }
         }
     }

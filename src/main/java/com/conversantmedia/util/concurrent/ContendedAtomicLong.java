@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * Created by jcairns on 5/28/14.
  */
-@sun.misc.Contended("cal")
 final class ContendedAtomicLong extends AtomicLong {
     private long p1, p2, p3, p4, p5, p6, p7;
     private long a1, a2, a3, a4, a5, a6, a7, a8;

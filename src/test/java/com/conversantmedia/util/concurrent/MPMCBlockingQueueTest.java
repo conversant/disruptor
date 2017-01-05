@@ -23,7 +23,6 @@ package com.conversantmedia.util.concurrent;
 import org.junit.*;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ public class MPMCBlockingQueueTest {
 
     @Before
     public void setup() {
-        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new ArrayBlockingQueue<>(1024));
+        executor = new ThreadPoolExecutor(5, 5, 1, TimeUnit.MINUTES, new DisruptorBlockingQueue<Runnable>(1024));
     }
 
     @After
@@ -209,14 +208,17 @@ public class MPMCBlockingQueueTest {
         }
 
 
-        executor.execute(() -> {
-            try {
-                Thread.sleep(1000);
-                // after a second remove one
-                dbq.poll();
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1000);
+                    // after a second remove one
+                    dbq.poll();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -271,14 +273,17 @@ public class MPMCBlockingQueueTest {
             dbq.offer(Integer.valueOf(i));
         }
 
-        executor.execute(() -> {
-            try {
-                Thread.sleep(1500);
-                // after a second remove one
-                dbq.poll();
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1500);
+                    // after a second remove one
+                    dbq.poll();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -343,14 +348,17 @@ public class MPMCBlockingQueueTest {
         final int cap = 10;
         final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
-        executor.execute(() -> {
-            try {
-                Thread.sleep(1000);
-                // after a second remove one
-                dbq.offer(Integer.valueOf(cap));
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1000);
+                    // after a second remove one
+                    dbq.offer(Integer.valueOf(cap));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -363,14 +371,17 @@ public class MPMCBlockingQueueTest {
         final int cap = 10;
         final BlockingQueue<Integer> dbq = new MPMCBlockingQueue<>(cap);
 
-        executor.execute(() -> {
-            try {
-                Thread.sleep(1000);
-                // after a second remove one
-                dbq.offer(Integer.valueOf(cap));
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(1000);
+                    // after a second remove one
+                    dbq.offer(Integer.valueOf(cap));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         });
 

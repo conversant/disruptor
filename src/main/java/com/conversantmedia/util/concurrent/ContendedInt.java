@@ -26,7 +26,6 @@ package com.conversantmedia.util.concurrent;
  */
 final class ContendedInt {
     public long p1, p2, p3, p4, p5, p6, p7;
-    @sun.misc.Contended("ci")
     public int value=0, p0;
     public long a1, a2, a3, a4, a5, a6, a7, a8;
 

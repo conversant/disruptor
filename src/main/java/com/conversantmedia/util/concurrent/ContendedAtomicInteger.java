@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Created by jcairns on 5/28/14.
  */
-@sun.misc.Contended("cai")
 final class ContendedAtomicInteger extends AtomicInteger {
     private volatile long a1, a2, a3, a4, a5, a6, a7;
     private volatile int p0;
