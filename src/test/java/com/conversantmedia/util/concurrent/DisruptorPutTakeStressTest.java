@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by jcairns on 2/23/16.
  */
+@Ignore // stress test
 public class DisruptorPutTakeStressTest {
 
     private static final int QUEUE_SZ = 1024;

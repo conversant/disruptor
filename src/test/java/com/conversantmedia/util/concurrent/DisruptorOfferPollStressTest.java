@@ -3,6 +3,7 @@ package com.conversantmedia.util.concurrent;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.BlockingQueue;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by jcairns on 2/23/16.
  */
+@Ignore // stress test
 public class DisruptorOfferPollStressTest {
 
     private static final int QUEUE_SZ = 1024;
