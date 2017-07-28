@@ -337,25 +337,25 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     public boolean remove(Object o) {
 
         for (;;) {
-            final long head = this.head.get();
+            final long head = this.head.sum();
             // we are optimistically advancing the head by one
             // if the object does not exist we have to put it back
             if (headCursor.compareAndSet(head, head + 1)) {
                 for (;;) {
-                    final long tail = this.tail.get();
+                    final long tail = this.tail.sum();
                     if (tailCursor.compareAndSet(tail, tail + 1)) {
                         // number removed
                         int n = 0;
 
                         // just blocked access to the entire queue - go for it
                         for (int i = 0; i < size(); i++) {
-                            final int slot = (int) ((this.head.get() + i) & mask);
+                            final int slot = (int) ((this.head.sum() + i) & mask);
                             if (buffer[slot] != null && buffer[slot].equals(o)) {
                                 n++;
 
                                 for (int j = i; j > 0; j--) {
-                                    final int cSlot = (int) ((this.head.get() + j - 1) & mask);
-                                    final int nextSlot = (int) ((this.head.get() + j) & mask);
+                                    final int cSlot = (int) ((this.head.sum() + j - 1) & mask);
+                                    final int nextSlot = (int) ((this.head.sum() + j) & mask);
                                     // overwrite ith element with previous
                                     buffer[nextSlot] = buffer[cSlot];
                                 }
@@ -370,7 +370,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
                             // done to block others from changing
                             tailCursor.set(tail);
                             // tail is unchanged
-                            this.head.set(head+n);
+                            this.head.add(n);
 
 
                             // queue is not full now
@@ -424,7 +424,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
         boolean isChanged = false;
 
         for (int i = 0; i < size(); i++) {
-            final int headSlot = (int) ((head.get() + i) & mask);
+            final int headSlot = (int) ((head.sum() + i) & mask);
             if (buffer[headSlot] != null && !c.contains(buffer[headSlot])) {
                 if (remove(buffer[headSlot])) {
                     // backtrack one step, we just backed values up at this point
@@ -444,8 +444,8 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
     }
 
     private boolean isFull() {
-        final long queueStart = tail.get() - size;
-        return head.get() == queueStart;
+        final long queueStart = tail.sum() - size;
+        return head.sum() == queueStart;
     }
 
     private final class RingIter implements Iterator<E> {
@@ -464,7 +464,7 @@ public final class DisruptorBlockingQueue<E> extends MultithreadConcurrentQueue<
 
         @Override
         public E next() {
-            final long pollPos = head.get();
+            final long pollPos = head.sum();
             final int slot = (int) ((pollPos + dx++) & mask);
             lastObj = buffer[slot];
             return lastObj;

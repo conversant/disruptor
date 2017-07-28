@@ -20,7 +20,7 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Tuned version of Martin Thompson's push pull queue
@@ -36,12 +36,12 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     protected final int size;
     protected final long mask;
 
-    protected final AtomicLong tail = new ContendedAtomicLong(0L);
+    protected final LongAdder tail = new ContendedLongAdder();
     protected final ContendedLong tailCache = new ContendedLong();
 
     protected final E[] buffer;
 
-    protected final AtomicLong head = new ContendedAtomicLong(0L);
+    protected final LongAdder head = new ContendedLongAdder();
     protected final ContendedLong headCache = new ContendedLong();
 
     public PushPullConcurrentQueue(final int size) {
@@ -57,12 +57,12 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     @Override
     public boolean offer(final E e) {
         if(e != null) {
-            final long tail = this.tail.get();
+            final long tail = this.tail.sum();
             final long queueStart = tail - size;
-            if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
+            if((headCache.value > queueStart) || ((headCache.value = head.sum()) > queueStart)) {
                 final int dx = (int) (tail & mask);
                 buffer[dx] = e;
-                this.tail.set(tail+1L);
+                this.tail.increment();
                 return true;
             } else {
                 return false;
@@ -74,13 +74,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public E poll() {
-        final long head = this.head.get();
-        if((head < tailCache.value) || (head < (tailCache.value = tail.get()))) {
+        final long head = this.head.sum();
+        if((head < tailCache.value) || (head < (tailCache.value = tail.sum()))) {
             final int dx = (int)(head & mask);
             final E e = buffer[dx];
             buffer[dx] = null;
 
-            this.head.set(head+1L);
+            this.head.increment();
             return e;
         } else {
             return null;
@@ -91,16 +91,16 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     public int remove(final E[] e) {
         int n = 0;
 
-        headCache.value = this.head.get();
+        headCache.value = this.head.sum();
 
         final int nMax = e.length;
-        for(long i = headCache.value, end = tail.get(); n<nMax && i<end; i++) {
+        for(long i = headCache.value, end = tail.sum(); n<nMax && i<end; i++) {
             final int dx = (int) (i & mask);
             e[n++] = buffer[dx];
             buffer[dx] = null;
         }
 
-        this.head.set(headCache.value+n);
+        this.head.add(n);
 
         return n;
     }
@@ -110,13 +110,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
         for(int i=0; i<buffer.length; i++) {
             buffer[i] = null;
         }
-        head.set(tail.get());
+        head.add(tail.sum()-head.sum());
     }
 
 
     @Override
     public final E peek() {
-        return buffer[(int)(head.get() & mask)];
+        return buffer[(int)(head.sum() & mask)];
     }
 
     /**
@@ -129,7 +129,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
      */
     @Override
     public final int size() {
-        return (int)Math.max(tail.get() - head.get(), 0);
+        return (int)Math.max(tail.sum() - head.sum(), 0);
     }
 
     @Override
@@ -139,13 +139,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final boolean isEmpty() {
-        return tail.get() == head.get();
+        return tail.sum() == head.sum();
     }
 
     @Override
     public final boolean contains(Object o) {
         if(o != null) {
-            for(long i = head.get(), end = tail.get(); i<end; i++) {
+            for(long i = head.sum(), end = tail.sum(); i<end; i++) {
                 final E e = buffer[(int)(i & mask)];
                 if(o.equals(e)) {
                     return true;
