@@ -20,7 +20,6 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -46,50 +45,36 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     // this must always be a power of 2
     //
     protected final int      size;
+
     // we need to compute a position in the ring buffer
     // modulo size, since size is a power of two
     // compute the bucket position with x&(size-1)
     // aka x&mask
-    protected final long     mask;
-
-    // notes about modulos size:
-    // for positive x, x % size = x & (size-1)
-    // for negative values, x % size = -(-x&(size-1))
-    // this is because the & takes off the sign
-    // we don't need to compute the precise modulo
-    // because the bitwise AND still captures the
-    // correct sequence even for negative values,
-    // i.e. 0, 1, 2, ..., m, 0, 1, 2, ..., m
-
-
-    // this data structure is sensitive to the head/tail sequence numbers
-    // rolling negative, the capacity check comparisons have all been cast
-    // with positive sequence numbers in mind
-
-    // now that we are using longs, good luck living long enough
-    // to see this roll in production ;-)
-
-    // ...in case your wondering the answer is 292 years
-
-    // The readers must know if the tail has been updated
-    // by concurrently executing write operations.
-    // This is updated at the end of the write operation
-    // to allow readers thread safe access to the queue tail.
-
+    final long     mask;
 
     // the sequence number of the end of the queue
-    protected final LongAdder tail = new ContendedLongAdder();
+    final LongAdder tail = new LongAdder();
+
+    final ContendedAtomicLong tailCursor = new ContendedAtomicLong(0L);
+
     // use the value in the L1 cache rather than reading from memory when possible
-    protected final ContendedLong tailCache = new ContendedLong(0L);
-    protected final AtomicLong tailCursor = new ContendedAtomicLong(0L);
+    long p1, p2, p3, p4, p5, p6, p7;
+    @sun.misc.Contended
+    long tailCache = 0L;
+    long a1, a2, a3, a4, a5, a6, a7, a8;
 
     // a ring buffer representing the queue
-    protected final E[] buffer;
+    final E[] buffer;
+
+    long r1, r2, r3, r4, r5, r6, r7;
+    @sun.misc.Contended
+    long headCache = 0L;
+    long c1, c2, c3, c4, c5, c6, c7, c8;
 
     // the sequence number of the start of the queue
-    protected final LongAdder head =  new ContendedLongAdder();
-    protected final ContendedLong headCache = new ContendedLong(0L);
-    protected final AtomicLong headCursor = new ContendedAtomicLong(0L);
+    final LongAdder head =  new LongAdder();
+
+    final ContendedAtomicLong headCursor = new ContendedAtomicLong(0L);
 
     /**
      * Construct a blocking queue of the given fixed capacity.
@@ -118,7 +103,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
             final long queueStart = tailSeq - size;
 
             // will this sequence exceed the capacity
-            if((headCache.value > queueStart) || ((headCache.value = head.sum()) > queueStart)) {
+            if((headCache > queueStart) || ((headCache = head.sum()) > queueStart)) {
                 // does the sequence still have the expected
                 // value
                 if(tailCursor.compareAndSet(tailSeq, tailSeq + 1L)) {
@@ -152,7 +137,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         for(;;) {
             final long head = this.head.sum();
             // is there data for us to poll
-            if((tailCache.value > head) || (tailCache.value = tail.sum()) > head) {
+            if((tailCache > head) || (tailCache = tail.sum()) > head) {
                 // check if we can update the sequence
                 if(headCursor.compareAndSet(head, head+1L)) {
                     try {
@@ -287,5 +272,9 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
             if(buffer[slot]!= null && buffer[slot].equals(o)) return true;
         }
         return false;
+    }
+
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8+r1+r2+r3+r4+r5+r6+r7+c1+c2+c3+c4+c5+c6+c7+c8+headCache+tailCache;
     }
 }

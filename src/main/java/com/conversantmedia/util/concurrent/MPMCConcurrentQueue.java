@@ -20,7 +20,6 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Dmitry Vyukov, Bounded MPMC queue - http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
@@ -32,13 +31,15 @@ import java.util.concurrent.atomic.AtomicLong;
 class MPMCConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     protected final int      size;
-    protected final long     mask;
+
+    final long     mask;
 
     // a ring buffer representing the queue
-    protected final Cell<E>[] buffer;
+    final Cell<E>[] buffer;
 
-    protected final AtomicLong head = new ContendedAtomicLong(0L);
-    protected final AtomicLong tail = new ContendedAtomicLong(0L);
+    final ContendedAtomicLong head = new ContendedAtomicLong(0L);
+
+    final ContendedAtomicLong tail = new ContendedAtomicLong(0L);
 
     /**
      * Construct a blocking queue of the given fixed capacity.
@@ -162,10 +163,13 @@ class MPMCConcurrentQueue<E> implements ConcurrentQueue<E> {
     }
 
     protected static final class Cell<R> {
-        final AtomicLong seq = new ContendedAtomicLong(0L);
+        final ContendedAtomicLong seq = new ContendedAtomicLong(0L);
+
         public long p1, p2, p3, p4, p5, p6, p7;
-        @sun.misc.Contended("cell")
+
+        @sun.misc.Contended
         R entry;
+
         public long a1, a2, a3, a4, a5, a6, a7, a8;
 
         Cell(final long s) {
@@ -176,6 +180,7 @@ class MPMCConcurrentQueue<E> implements ConcurrentQueue<E> {
         public long sumToAvoidOptimization() {
             return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8;
         }
+
     }
 
 }

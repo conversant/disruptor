@@ -33,16 +33,26 @@ import java.util.concurrent.atomic.LongAdder;
  * Created by jcairns on 5/28/14.
  */
 public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
-    protected final int size;
-    protected final long mask;
 
-    protected final LongAdder tail = new ContendedLongAdder();
-    protected final ContendedLong tailCache = new ContendedLong();
+    final int size;
 
-    protected final E[] buffer;
+    final long mask;
 
-    protected final LongAdder head = new ContendedLongAdder();
-    protected final ContendedLong headCache = new ContendedLong();
+    final LongAdder tail = new LongAdder();
+
+    long p1, p2, p3, p4, p5, p6, p7;
+    @sun.misc.Contended
+    long tailCache = 0L;
+    long a1, a2, a3, a4, a5, a6, a7, a8;
+
+    final E[] buffer;
+
+    long r1, r2, r3, r4, r5, r6, r7;
+    @sun.misc.Contended
+    long headCache = 0L;
+    long c1, c2, c3, c4, c5, c6, c7, c8;
+
+    final LongAdder head = new LongAdder();
 
     public PushPullConcurrentQueue(final int size) {
         int rs = 1;
@@ -59,7 +69,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
         if(e != null) {
             final long tail = this.tail.sum();
             final long queueStart = tail - size;
-            if((headCache.value > queueStart) || ((headCache.value = head.sum()) > queueStart)) {
+            if((headCache > queueStart) || ((headCache = head.sum()) > queueStart)) {
                 final int dx = (int) (tail & mask);
                 buffer[dx] = e;
                 this.tail.increment();
@@ -75,7 +85,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     @Override
     public E poll() {
         final long head = this.head.sum();
-        if((head < tailCache.value) || (head < (tailCache.value = tail.sum()))) {
+        if((head < tailCache) || (head < (tailCache = tail.sum()))) {
             final int dx = (int)(head & mask);
             final E e = buffer[dx];
             buffer[dx] = null;
@@ -91,10 +101,10 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     public int remove(final E[] e) {
         int n = 0;
 
-        headCache.value = this.head.sum();
+        headCache = this.head.sum();
 
         final int nMax = e.length;
-        for(long i = headCache.value, end = tail.sum(); n<nMax && i<end; i++) {
+        for(long i = headCache, end = tail.sum(); n<nMax && i<end; i++) {
             final int dx = (int) (i & mask);
             e[n++] = buffer[dx];
             buffer[dx] = null;
@@ -153,5 +163,9 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
         }
         return false;
+    }
+
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8+r1+r2+r3+r4+r5+r6+r7+c1+c2+c3+c4+c5+c6+c7+c8+headCache+tailCache;
     }
 }

@@ -41,6 +41,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     // optimized out and have no impact on timing values
     //
     protected final Condition queueNotFullCondition;
+
     protected final Condition queueNotEmptyCondition;
 
     /**
