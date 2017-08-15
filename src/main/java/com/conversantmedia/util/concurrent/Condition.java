@@ -49,23 +49,37 @@ interface Condition {
      * progressively transition from spin to yield over time
      */
     static int progressiveYield(final int n) {
-        if(n > 100) {
+        if(n > 500) {
             if(n<1000) {
                 // "randomly" yield 1:8
                 if((n & 0x7) == 0) {
                     LockSupport.parkNanos(PARK_TIMEOUT);
+                } else {
+                    onSpinWait();
                 }
             } else if(n<MAX_PROG_YIELD) {
                 // "randomly" yield 1:4
                 if((n & 0x3) == 0) {
                     Thread.yield();
+                } else {
+                    onSpinWait();
                 }
             } else {
                 Thread.yield();
                 return n;
             }
+        } else {
+            onSpinWait();
         }
         return n+1;
+    }
+
+    static void onSpinWait() {
+
+        // Java 9 hint for spin waiting PAUSE instruction
+
+        //http://openjdk.java.net/jeps/285
+        // Thread.onSpinWait();
     }
 
     /**

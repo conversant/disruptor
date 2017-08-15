@@ -20,9 +20,10 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.LockSupport;
+
+import static com.conversantmedia.util.concurrent.ContendedAtomicLong.CACHE_LINE;
 
 /**
  * Created by jcairns on 12/11/14.
@@ -30,20 +31,24 @@ import java.util.concurrent.locks.LockSupport;
 // abstract condition supporting common condition code
 abstract class AbstractWaitingCondition implements Condition {
 
+    private static final int CACHE_LINE_REFS = CACHE_LINE/Long.BYTES;
 
     // keep track of whos waiting so we don't have to synchronize
     // or notify needlessly - when nobody is waiting
 
     private static final int MAX_WAITERS = 8;
 
-    private static final int WAITER_MASK = MAX_WAITERS-1;
+    private static final long WAITER_MASK = MAX_WAITERS-1L;
 
     private static final long WAIT_TIME = PARK_TIMEOUT;
 
-    private final AtomicReferenceArray<Thread> waiter = new AtomicReferenceArray<Thread>(MAX_WAITERS);
+    private final ContendedLongAdder waitCount = new ContendedLongAdder();
 
-    private final AtomicInteger waitCount = new ContendedAtomicInteger(0);
-    private final ContendedInt waitCache = new ContendedInt(0);
+    @sun.misc.Contended
+    private final AtomicReferenceArray<Thread> waiter = new AtomicReferenceArray<>(MAX_WAITERS+2*CACHE_LINE_REFS);
+
+    @sun.misc.Contended
+    private long waitCache = 0L;
 
     /**
      * code below will block until test() returns false
@@ -58,65 +63,62 @@ abstract class AbstractWaitingCondition implements Condition {
         for (;;) {
 
             try {
-                final int waitCount = this.waitCount.get();
-                int waitSequence = waitCount;
+                final long waitCount = this.waitCount.sum();
+                long waitSequence = waitCount;
+                this.waitCount.increment();
+                waitCache = waitCount+1;
 
-                if (this.waitCount.compareAndSet(waitCount, waitCount + 1)) {
-                    waitCache.value = waitCount+1;
+                long timeNow = System.nanoTime();
+                final long expires = timeNow+timeout;
 
-                    long timeNow = System.nanoTime();
-                    final long expires = timeNow+timeout;
+                final Thread t = Thread.currentThread();
 
-                    final Thread t = Thread.currentThread();
+                if(waitCount == 0) {
+                    // first thread spins
 
-                    if(waitCount == 0) {
-                        // first thread spins
-
-                        int spin = 0;
-                        while(test() && expires>timeNow && !t.isInterrupted()) {
-                            spin = Condition.progressiveYield(spin);
-                            timeNow = System.nanoTime();
-                        }
-
-                        if(t.isInterrupted()) {
-                            throw new InterruptedException();
-                        }
-
-                        return;
-                    } else {
-                        // wait to become a waiter
-                        int spin = 0;
-                        while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && expires>timeNow) {
-                            if(spin < Condition.MAX_PROG_YIELD) {
-                                spin = Condition.progressiveYield(spin);
-                            } else {
-                                LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
-                            }
-
-                            timeNow = System.nanoTime();
-                        }
-                        // are we a waiter?   wait until we are awakened
-                        while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && expires>timeNow && !t.isInterrupted()) {
-                            LockSupport.parkNanos((expires-timeNow)>>2);
-                            timeNow = System.nanoTime();
-                        }
-
-                        if(t.isInterrupted()) {
-                            // we are not waiting we are interrupted
-                            while(!waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null) && waiter.get(0) == t) {
-                                LockSupport.parkNanos(PARK_TIMEOUT);
-                            }
-
-                            throw new InterruptedException();
-                        }
-
-                        return;
-
-
+                    int spin = 0;
+                    while(test() && expires>timeNow && !t.isInterrupted()) {
+                        spin = Condition.progressiveYield(spin);
+                        timeNow = System.nanoTime();
                     }
+
+                    if(t.isInterrupted()) {
+                        throw new InterruptedException();
+                    }
+
+                    return;
+                } else {
+                    // wait to become a waiter
+                    int spin = 0;
+                    while(test() && !waiter.compareAndSet((int)(waitSequence++ & WAITER_MASK)+CACHE_LINE_REFS, null, t) && expires>timeNow) {
+                        if(spin < Condition.MAX_PROG_YIELD) {
+                            spin = Condition.progressiveYield(spin);
+                        } else {
+                            LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
+                        }
+
+                        timeNow = System.nanoTime();
+                    }
+                    // are we a waiter?   wait until we are awakened
+                    while(test() && (waiter.get((int)((waitSequence-1) & WAITER_MASK)+CACHE_LINE_REFS) == t) && expires>timeNow && !t.isInterrupted()) {
+                        LockSupport.parkNanos((expires-timeNow)>>2);
+                        timeNow = System.nanoTime();
+                    }
+
+                    if(t.isInterrupted()) {
+                        // we are not waiting we are interrupted
+                        while(!waiter.compareAndSet((int)((waitSequence-1) & WAITER_MASK)+CACHE_LINE_REFS, t, null) && waiter.get(CACHE_LINE_REFS) == t) {
+                            LockSupport.parkNanos(PARK_TIMEOUT);
+                        }
+
+                        throw new InterruptedException();
+                    }
+
+                    return;
                 }
             }finally{
-                waitCache.value = waitCount.decrementAndGet();
+                waitCount.decrement();
+                waitCache = waitCount.sum();
             }
         }
     }
@@ -126,59 +128,57 @@ abstract class AbstractWaitingCondition implements Condition {
         for(;;) {
 
             try {
-                final int waitCount = this.waitCount.get();
-                int waitSequence = waitCount;
+                final long waitCount = this.waitCount.sum();
+                long waitSequence = waitCount;
+                this.waitCount.increment();
+                waitCache = waitCount+1;
 
-                if (this.waitCount.compareAndSet(waitCount, waitCount + 1)) {
-                    waitCache.value = waitCount+1;
+                final Thread t = Thread.currentThread();
 
-                    final Thread t = Thread.currentThread();
-
-                    if(waitCount == 0) {
-                        int spin = 0;
-                        // first thread spinning
-                        while(test() && !t.isInterrupted()) {
-                            spin = Condition.progressiveYield(spin);
-                        }
-
-                        if(t.isInterrupted()) {
-                            throw new InterruptedException();
-                        }
-
-                        return;
-                    } else {
-
-                        // wait to become a waiter
-                        int spin = 0;
-                        while(test() && !waiter.compareAndSet(waitSequence++ & WAITER_MASK, null, t) && !t.isInterrupted()) {
-                            if(spin < Condition.MAX_PROG_YIELD) {
-                                spin = Condition.progressiveYield(spin);
-                            } else {
-                                LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
-                            }
-                        }
-
-                        // are we a waiter?   wait until we are awakened
-                        while(test() && (waiter.get((waitSequence-1) & WAITER_MASK) == t) && !t.isInterrupted()) {
-                            LockSupport.parkNanos(1_000_000L);
-                        }
-
-                        if(t.isInterrupted()) {
-                            // we are not waiting we are interrupted
-                            while(!waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null) && waiter.get(0) == t) {
-                                LockSupport.parkNanos(WAIT_TIME);
-                            }
-
-                            throw new InterruptedException();
-                        }
-
-                        return;
-
+                if(waitCount == 0) {
+                    int spin = 0;
+                    // first thread spinning
+                    while(test() && !t.isInterrupted()) {
+                        spin = Condition.progressiveYield(spin);
                     }
+
+                    if(t.isInterrupted()) {
+                        throw new InterruptedException();
+                    }
+
+                    return;
+                } else {
+
+                    // wait to become a waiter
+                    int spin = 0;
+                    while(test() && !waiter.compareAndSet((int)(waitSequence++ & WAITER_MASK)+CACHE_LINE_REFS, null, t) && !t.isInterrupted()) {
+                        if(spin < Condition.MAX_PROG_YIELD) {
+                            spin = Condition.progressiveYield(spin);
+                        } else {
+                            LockSupport.parkNanos(MAX_WAITERS*Condition.PARK_TIMEOUT);
+                        }
+                    }
+
+                    // are we a waiter?   wait until we are awakened
+                    while(test() && (waiter.get((int)((waitSequence-1) & WAITER_MASK)+CACHE_LINE_REFS) == t) && !t.isInterrupted()) {
+                        LockSupport.parkNanos(1_000_000L);
+                    }
+
+                    if(t.isInterrupted()) {
+                        // we are not waiting we are interrupted
+                        while(!waiter.compareAndSet((int)((waitSequence-1) & WAITER_MASK)+CACHE_LINE_REFS, t, null) && waiter.get(CACHE_LINE_REFS) == t) {
+                            LockSupport.parkNanos(WAIT_TIME);
+                        }
+
+                        throw new InterruptedException();
+                    }
+
+                    return;
 
                 }
             } finally {
-                waitCache.value = waitCount.decrementAndGet();
+                waitCount.decrement();
+                waitCache = waitCount.sum();
             }
         }
     }
@@ -186,25 +186,25 @@ abstract class AbstractWaitingCondition implements Condition {
     @Override
     public void signal() {
         // only signal if somebody is blocking for it
-        if (waitCache.value > 0 || (waitCache.value = waitCount.get()) > 0) {
-            int waitSequence = 0;
+        if (waitCache > 0 || (waitCache = waitCount.sum()) > 0) {
+            long waitSequence = 0L;
             for(;;) {
                 Thread t;
-                while((t = waiter.get(waitSequence++ & WAITER_MASK)) != null) {
-                    if(waiter.compareAndSet((waitSequence-1) & WAITER_MASK, t, null)) {
+                while((t = waiter.get((int)(waitSequence++ & WAITER_MASK)+CACHE_LINE_REFS)) != null) {
+                    if(waiter.compareAndSet((int)((waitSequence-1) & WAITER_MASK)+CACHE_LINE_REFS, t, null)) {
                         LockSupport.unpark(t);
                     } else {
                         LockSupport.parkNanos(WAIT_TIME);
                     }
 
                     // go through all waiters once, or return if we are finished
-                    if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache.value = waitCount.get()) == 0) {
+                    if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache = waitCount.sum()) == 0) {
                         return;
                     }
                 }
 
                 // go through all waiters once, or return if we are finished
-                if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache.value = waitCount.get()) == 0) {
+                if(((waitSequence & WAITER_MASK) == WAITER_MASK) || (waitCache = waitCount.sum()) == 0) {
                     return;
                 }
             }

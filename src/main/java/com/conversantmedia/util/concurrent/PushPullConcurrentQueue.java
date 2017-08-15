@@ -20,8 +20,6 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Tuned version of Martin Thompson's push pull queue
  *
@@ -33,16 +31,24 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by jcairns on 5/28/14.
  */
 public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
-    protected final int size;
-    protected final long mask;
+    final int size;
+    final long mask;
 
-    protected final AtomicLong tail = new ContendedAtomicLong(0L);
-    protected final ContendedLong tailCache = new ContendedLong();
+    final ContendedLongAdder tail = new ContendedLongAdder();
 
-    protected final E[] buffer;
+    long p1, p2, p3, p4, p5, p6, p7;
+    @sun.misc.Contended
+    long tailCache = 0L;
+    long a1, a2, a3, a4, a5, a6, a7, a8;
 
-    protected final AtomicLong head = new ContendedAtomicLong(0L);
-    protected final ContendedLong headCache = new ContendedLong();
+    final E[] buffer;
+
+    long r1, r2, r3, r4, r5, r6, r7;
+    @sun.misc.Contended
+    long headCache = 0L;
+    long c1, c2, c3, c4, c5, c6, c7, c8;
+
+    final ContendedLongAdder head = new ContendedLongAdder();
 
     public PushPullConcurrentQueue(final int size) {
         int rs = 1;
@@ -57,12 +63,12 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     @Override
     public boolean offer(final E e) {
         if(e != null) {
-            final long tail = this.tail.get();
+            final long tail = this.tail.sum();
             final long queueStart = tail - size;
-            if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
+            if((headCache > queueStart) || ((headCache = head.sum()) > queueStart)) {
                 final int dx = (int) (tail & mask);
                 buffer[dx] = e;
-                this.tail.set(tail+1L);
+                this.tail.increment();
                 return true;
             } else {
                 return false;
@@ -74,13 +80,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public E poll() {
-        final long head = this.head.get();
-        if((head < tailCache.value) || (head < (tailCache.value = tail.get()))) {
+        final long head = this.head.sum();
+        if((head < tailCache) || (head < (tailCache = tail.sum()))) {
             final int dx = (int)(head & mask);
             final E e = buffer[dx];
             buffer[dx] = null;
 
-            this.head.set(head+1L);
+            this.head.increment();
             return e;
         } else {
             return null;
@@ -91,16 +97,16 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     public int remove(final E[] e) {
         int n = 0;
 
-        headCache.value = this.head.get();
+        headCache = this.head.sum();
 
         final int nMax = e.length;
-        for(long i = headCache.value, end = tail.get(); n<nMax && i<end; i++) {
+        for(long i = headCache, end = tail.sum(); n<nMax && i<end; i++) {
             final int dx = (int) (i & mask);
             e[n++] = buffer[dx];
             buffer[dx] = null;
         }
 
-        this.head.set(headCache.value+n);
+        this.head.add(n);
 
         return n;
     }
@@ -110,13 +116,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
         for(int i=0; i<buffer.length; i++) {
             buffer[i] = null;
         }
-        head.set(tail.get());
+        head.add(tail.sum()-head.sum());
     }
 
 
     @Override
     public final E peek() {
-        return buffer[(int)(head.get() & mask)];
+        return buffer[(int)(head.sum() & mask)];
     }
 
     /**
@@ -129,7 +135,7 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
      */
     @Override
     public final int size() {
-        return (int)Math.max(tail.get() - head.get(), 0);
+        return (int)Math.max(tail.sum() - head.sum(), 0);
     }
 
     @Override
@@ -139,13 +145,13 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final boolean isEmpty() {
-        return tail.get() == head.get();
+        return tail.sum() == head.sum();
     }
 
     @Override
     public final boolean contains(Object o) {
         if(o != null) {
-            for(long i = head.get(), end = tail.get(); i<end; i++) {
+            for(long i = head.sum(), end = tail.sum(); i<end; i++) {
                 final E e = buffer[(int)(i & mask)];
                 if(o.equals(e)) {
                     return true;
@@ -153,5 +159,9 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
             }
         }
         return false;
+    }
+
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8+r1+r2+r3+r4+r5+r6+r7+c1+c2+c3+c4+c5+c6+c7+c8+headCache+tailCache;
     }
 }

@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by jcairns on 2/12/16.
  */
 public class SequenceLock implements OptimisticLock {
-    final AtomicLong sequence = new ContendedAtomicLong(2);
+    final ContendedAtomicLong sequence = new ContendedAtomicLong(2);
 
     @Override
     public long readLock() {

@@ -20,8 +20,6 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * This is the disruptor implemented for multiple simultaneous reader and writer threads.
  *
@@ -45,50 +43,34 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     // this must always be a power of 2
     //
     protected final int      size;
+
     // we need to compute a position in the ring buffer
     // modulo size, since size is a power of two
     // compute the bucket position with x&(size-1)
     // aka x&mask
-    protected final long     mask;
-
-    // notes about modulos size:
-    // for positive x, x % size = x & (size-1)
-    // for negative values, x % size = -(-x&(size-1))
-    // this is because the & takes off the sign
-    // we don't need to compute the precise modulo
-    // because the bitwise AND still captures the
-    // correct sequence even for negative values,
-    // i.e. 0, 1, 2, ..., m, 0, 1, 2, ..., m
-
-
-    // this data structure is sensitive to the head/tail sequence numbers
-    // rolling negative, the capacity check comparisons have all been cast
-    // with positive sequence numbers in mind
-
-    // now that we are using longs, good luck living long enough
-    // to see this roll in production ;-)
-
-    // ...in case your wondering the answer is 292 years
-
-    // The readers must know if the tail has been updated
-    // by concurrently executing write operations.
-    // This is updated at the end of the write operation
-    // to allow readers thread safe access to the queue tail.
-
+    final long     mask;
 
     // the sequence number of the end of the queue
-    protected final AtomicLong tail = new ContendedAtomicLong(0L);
+    final ContendedLongAdder tail = new ContendedLongAdder();
+    final ContendedAtomicLong tailCursor = new ContendedAtomicLong(0L);
+
     // use the value in the L1 cache rather than reading from memory when possible
-    protected final ContendedLong tailCache = new ContendedLong(0L);
-    protected final AtomicLong tailCursor = new ContendedAtomicLong(0L);
+    long p1, p2, p3, p4, p5, p6, p7;
+    @sun.misc.Contended
+    long tailCache = 0L;
+    long a1, a2, a3, a4, a5, a6, a7, a8;
 
     // a ring buffer representing the queue
-    protected final E[] buffer;
+    final E[] buffer;
+
+    long r1, r2, r3, r4, r5, r6, r7;
+    @sun.misc.Contended
+    long headCache = 0L;
+    long c1, c2, c3, c4, c5, c6, c7, c8;
 
     // the sequence number of the start of the queue
-    protected final AtomicLong head =  new ContendedAtomicLong(0L);
-    protected final ContendedLong headCache = new ContendedLong(0L);
-    protected final AtomicLong headCursor = new ContendedAtomicLong(0L);
+    final ContendedLongAdder head =  new ContendedLongAdder();
+    final ContendedAtomicLong headCursor = new ContendedAtomicLong(0L);
 
     /**
      * Construct a blocking queue of the given fixed capacity.
@@ -112,16 +94,15 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         int spin = 0;
 
         for(;;) {
-            final long tailSeq = tail.get();
+            final long tailSeq = tail.sum();
             // never offer onto the slot that is currently being polled off
             final long queueStart = tailSeq - size;
 
             // will this sequence exceed the capacity
-            if((headCache.value > queueStart) || ((headCache.value = head.get()) > queueStart)) {
-                final long tailNext = tailSeq + 1L;
+            if((headCache > queueStart) || ((headCache = head.sum()) > queueStart)) {
                 // does the sequence still have the expected
                 // value
-                if(tailCursor.compareAndSet(tailSeq, tailNext)) {
+                if(tailCursor.compareAndSet(tailSeq, tailSeq + 1L)) {
 
                     try {
                         // tailSeq is valid
@@ -133,7 +114,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return true;
                     } finally {
-                        tail.set(tailNext);
+                        tail.increment();
                     }
                 } // else - sequence misfire, somebody got our spot, try again
             } else {
@@ -150,12 +131,11 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         int spin = 0;
 
         for(;;) {
-            final long head = this.head.get();
+            final long head = this.head.sum();
             // is there data for us to poll
-            if((tailCache.value > head) || (tailCache.value= tail.get()) > head) {
-                final long headNext = head+1L;
+            if((tailCache > head) || (tailCache = tail.sum()) > head) {
                 // check if we can update the sequence
-                if(headCursor.compareAndSet(head, headNext)) {
+                if(headCursor.compareAndSet(head, head+1L)) {
                     try {
                         // copy the data out of slot
                         final int pollSlot = (int)(head&mask);
@@ -166,7 +146,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                         return pollObj;
                     } finally {
-                        this.head.set(headNext);
+                        this.head.increment();
                     }
                 } // else - somebody else is reading this spot already: retry
             } else {
@@ -181,7 +161,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final E peek() {
-        return buffer[(int)(head.get()&mask)];
+        return buffer[(int)(head.sum()&mask)];
     }
 
 
@@ -197,11 +177,11 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         int spin = 0;
 
         for(;;) {
-            final long pollPos = head.get(); // prepare to qualify?
+            final long pollPos = head.sum(); // prepare to qualify?
             // is there data for us to poll
             // note we must take a difference in values here to guard against
             // integer overflow
-            final int nToRead = Math.min((int)(tail.get() - pollPos), maxElements);
+            final int nToRead = Math.min((int)(tail.sum() - pollPos), maxElements);
             if(nToRead > 0 ) {
 
                 for(int i=0; i<nToRead;i++) {
@@ -211,7 +191,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
                 // if we still control the sequence, update and return
                 if(headCursor.compareAndSet(pollPos,  pollPos+nToRead)) {
-                    head.set(pollPos+nToRead);
+                    head.add(nToRead);
                     return nToRead;
                 }
             } else {
@@ -237,7 +217,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
         // note these values can roll from positive to
         // negative, this is properly handled since
         // it is a difference
-        return (int)Math.max((tail.get() - head.get()), 0);
+        return (int)Math.max((tail.sum() - head.sum()), 0);
     }
 
     @Override
@@ -247,17 +227,17 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     @Override
     public final boolean isEmpty() {
-        return tail.get() == head.get();
+        return tail.sum() == head.sum();
     }
 
     @Override
     public void clear() {
         int spin = 0;
         for(;;) {
-            final long head = this.head.get();
+            final long head = this.head.sum();
             if(headCursor.compareAndSet(head, head+1)) {
                 for(;;) {
-                    final long tail = this.tail.get();
+                    final long tail = this.tail.sum();
                     if (tailCursor.compareAndSet(tail, tail + 1)) {
 
                         // we just blocked all changes to the queue
@@ -268,8 +248,8 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
                         }
 
                         // advance head to same location as current end
-                        this.head.set(tail+1);
-                        this.tail.set(tail+1);
+                        this.tail.increment();
+                        this.head.add(tail-head+1);
                         headCursor.set(tail + 1);
 
                         return;
@@ -284,10 +264,13 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     @Override
     public final boolean contains(Object o) {
         for(int i=0; i<size(); i++) {
-            final int slot = (int)((head.get() + i) & mask);
+            final int slot = (int)((head.sum() + i) & mask);
             if(buffer[slot]!= null && buffer[slot].equals(o)) return true;
         }
         return false;
     }
 
+    long sumToAvoidOptimization() {
+        return p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7+a8+r1+r2+r3+r4+r5+r6+r7+c1+c2+c3+c4+c5+c6+c7+c8+headCache+tailCache;
+    }
 }

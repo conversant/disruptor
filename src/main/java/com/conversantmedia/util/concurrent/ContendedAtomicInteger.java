@@ -20,29 +20,38 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  * Avoid false cache line sharing
  *
  * Created by jcairns on 5/28/14.
  */
-@sun.misc.Contended("cai")
-final class ContendedAtomicInteger extends AtomicInteger {
-    private volatile long a1, a2, a3, a4, a5, a6, a7;
-    private volatile int p0;
-    private volatile long p1, p2, p3, p4, p5, p6, p7, p8;
+final class ContendedAtomicInteger {
+
+    private static final int CACHE_LINE_INTS = ContendedAtomicLong.CACHE_LINE/Integer.BYTES;
+
+    private final AtomicIntegerArray contendedArray;
 
     public ContendedAtomicInteger(final int init) {
-        super(init);
+        contendedArray = new AtomicIntegerArray(2*CACHE_LINE_INTS);
+
+        set(init);
     }
 
-    public long sumToAvoidOptimization() {
-        return p0+p1+p2+p3+p4+p5+p6+p7+a1+a2+a3+a4+a5+a6+a7;
+    public int get() {
+        return contendedArray.get(CACHE_LINE_INTS);
+    }
+
+    public void set(final int i) {
+        contendedArray.set(CACHE_LINE_INTS, i);
+    }
+
+    public boolean compareAndSet(final int expect, final int i) {
+        return contendedArray.compareAndSet(CACHE_LINE_INTS, expect, i);
     }
 
     public String toString() {
         return Integer.toString(get());
     }
-
 }

@@ -41,6 +41,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     // optimized out and have no impact on timing values
     //
     protected final Condition queueNotFullCondition;
+
     protected final Condition queueNotEmptyCondition;
 
     /**
@@ -313,8 +314,8 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
     }
 
     private boolean isFull() {
-        final long queueStart = tail.get() - size;
-        return head.get() == queueStart;
+        final long queueStart = tail.sum() - size;
+        return head.sum() == queueStart;
     }
 
     private final class RingIter implements Iterator<E> {
@@ -333,7 +334,7 @@ public final class PushPullBlockingQueue<E> extends PushPullConcurrentQueue<E> i
 
         @Override
         public E next() {
-            final long pollPos = head.get();
+            final long pollPos = head.sum();
             final int slot = (int) ((pollPos + dx++) & mask);
             lastObj = buffer[slot];
             return lastObj;

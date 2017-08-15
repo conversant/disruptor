@@ -212,15 +212,7 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>jdk7</id>
-      <activation>
-        <jdk>1.7</jdk>
-      </activation>
-      <properties>
-        <jdkClassifier>jdk7</jdkClassifier>
-      </properties>
-    </profile>
+	  <!-- Java 7 is no longer supported as of release 1.2.11 -->
     <profile>
       <id>jdk8</id>
       <activation>

@@ -8,7 +8,7 @@ import org.junit.Test;
  * Created by jcairns on 1/26/16.
  */
 public class ConcurrentStackPerformanceTest {
-    private static final int NRUN = 1000;
+    private static final int NRUN = 1000*1;
     private static final Integer INTVAL = 6767;
 
     @Test

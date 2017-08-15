@@ -21,7 +21,6 @@ package com.conversantmedia.util.concurrent;
  */
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
@@ -37,7 +36,7 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
     private final AtomicReferenceArray<N> stack;
 
     // representing the top of the stack
-    private final AtomicInteger stackTop = new ContendedAtomicInteger(0);
+    private final ContendedAtomicInteger stackTop = new ContendedAtomicInteger(0);
 
     private final SequenceLock  seqLock = new SequenceLock();
 
