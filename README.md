@@ -6,33 +6,33 @@ Disruptor is the highest performing intra-thread transfer mechanism available in
 
 # Getting Started
 
-Simply run the maven build to build and use the package.
+Run the maven build to build and use the package.
 
 ```$ mvn -U clean package```
 
 # Conversant Disruptor is on Maven Central
 
-Maven Java 8 users can incorporate Conversant Disruptor the usual way:
+Java 8 users can incorporate Conversant Disruptor from Maven Central:
 
 ```
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.10</version>
+  <version>1.2.11</version>
   <classifier>jdk8</classifier>
 </dependency>
 ```
-OR
+Or through the "main" jar
 
 ```
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.10</version>
+  <version>1.2.11</version>
 </dependency>
 ```
 
-Java 7 is also supported
+Java 7 is only supported in 1.2.10 and below.   However, 1.2.11 and Java 8 is highly recommended for best performance.
 
 ```
 <dependency>
@@ -46,6 +46,5 @@ Java 7 is also supported
 ## Discussion Forum
 
 Conversant Disruptor has a google group so you can follow releases and changes:   
-
 https://groups.google.com/forum/#!forum/conversant-disruptor
 
