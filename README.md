@@ -2,7 +2,7 @@
 
 # Conversant ConcurrentQueue and Disruptor BlockingQueue
 
-Disruptor is the highest performing intra-thread transfer mechanism available in Java.  Conversant Disruptor is the highest performing implementation of this type of ring buffer queue because it has almost no overhead and it exploits a particularly simple design. 
+Disruptor is the highest performing intra-thread transfer mechanism available in Java.  Conversant Disruptor is the highest performing implementation of this type of ring buffer because it has almost no overhead and it exploits a particularly simple design. 
 
 <table>
 <td><img src="https://github.com/conversant/disruptor/blob/master/benchmark/benchmark.jpg?raw=true"></td><tr>
@@ -17,7 +17,7 @@ Run the maven build to build and use the package.
 
 # Conversant Disruptor is on Maven Central
 
-Java 8 users can incorporate Conversant Disruptor from Maven Central:
+Java 8 is highly recommended for best performance.  Java 8 users can include Conversant Disruptor from Maven Central:
 
 ```
 <dependency>
@@ -27,7 +27,7 @@ Java 8 users can incorporate Conversant Disruptor from Maven Central:
   <classifier>jdk8</classifier>
 </dependency>
 ```
-Or through the "main" jar
+Or through the main jar
 
 ```
 <dependency>
@@ -37,7 +37,7 @@ Or through the "main" jar
 </dependency>
 ```
 
-Java 7 is only supported in 1.2.10 and below.   However, 1.2.11 and Java 8 is highly recommended for best performance.
+Java 7 is only supported in 1.2.10 and below.   
 
 ```
 <dependency>
