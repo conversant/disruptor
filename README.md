@@ -4,6 +4,11 @@
 
 Disruptor is the highest performing intra-thread transfer mechanism available in Java.  Conversant Disruptor is the highest performing implementation of this type of ring buffer queue because it has almost no overhead and it exploits a particularly simple design. 
 
+<table>
+<td><img src="https://github.com/conversant/disruptor/blob/master/benchmark/benchmark.jpg?raw=true"></td><tr>
+<caption>2017 Conversant Disruptor - Still the World's Fastest</caption>
+</table>
+
 # Getting Started
 
 Run the maven build to build and use the package.
