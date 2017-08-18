@@ -6,7 +6,7 @@ Disruptor is the highest performing intra-thread transfer mechanism available in
 
 <table>
 <td><img src="https://github.com/conversant/disruptor/blob/master/benchmark/benchmark.jpg?raw=true"></td><tr>
-<caption>2017 Conversant Disruptor - Still the World's Fastest</caption>
+<caption><strong>2017 Conversant Disruptor - Still the World's Fastest</strong></caption>
 </table>
 
 # Getting Started
