@@ -8,3 +8,4 @@
 1.2.8 - Padding changes
 1.2.9 - bug fixes
 1.2.10 - major point release, cleanup, adding MPMC, @Contended annotation
+1.2.11 - Java 8 specific performance improvements, Java 7 no longer supported
