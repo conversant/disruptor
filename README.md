@@ -17,23 +17,34 @@ Run the maven build to build and use the package.
 
 # Conversant Disruptor is on Maven Central
 
-Java 8 is highly recommended for best performance.  Java 8 users can include Conversant Disruptor from Maven Central:
+For Java 8, Include Conversant Disruptor from Maven Central:
 
 ```
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.11</version>
+  <version>1.2.12</version>
   <classifier>jdk8</classifier>
 </dependency>
 ```
-Or through the main jar
+For Java 10:
 
 ```
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.11</version>
+  <version>1.2.12</version>
+  <classifier>jdk10</classifier>
+</dependency>
+```
+
+Or through the default Java 8 jar
+
+```
+<dependency>
+  <groupId>com.conversantmedia</groupId>
+  <artifactId>disruptor</artifactId>
+  <version>1.2.12</version>
 </dependency>
 ```
 
@@ -47,6 +58,8 @@ Java 7 is only supported in 1.2.10 and below.
   <classifier>jdk7</classifier>
 </dependency>
 ```
+
+Java 9 is no longer supported.
 
 ## Discussion Forum
 
