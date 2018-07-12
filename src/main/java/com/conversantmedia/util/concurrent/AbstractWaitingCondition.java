@@ -48,7 +48,6 @@ abstract class AbstractWaitingCondition implements Condition {
     private final AtomicReferenceArray<Thread> waiter = new AtomicReferenceArray<>(MAX_WAITERS+2*CACHE_LINE_REFS);
 
     long r1, r2, r3, r4, r5, r6, r7;
-    @sun.misc.Contended
     private long waitCache = 0L;
     long c1, c2, c3, c4, c5, c6, c7, c8;
 

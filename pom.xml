@@ -5,7 +5,7 @@
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.12-SNAPSHOT</version>
+  <version>1.2.12</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://github.com/conversant/disruptor</url>
   <description>Conversant Disruptor - very high throughput Java BlockingQueue</description>
@@ -147,7 +147,7 @@
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <configuration>
-            <classifier>${jdkClassifier}</classifier>
+              <classifier>${jdkClassifier}</classifier>
           </configuration>
         </plugin>        
 	<plugin>
@@ -212,23 +212,33 @@
   </build>
 
   <profiles>
-	  <!-- Java 7 is no longer supported as of release 1.2.11 -->
+      <!-- Java 7 is no longer supported as of release 1.2.11 -->
+      <!-- Java 9 is no longer supported as of release 1.2.12 -->
+    <profile>
+      <id>default</id>
+      <activation>
+          <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+          <jdkClassifier></jdkClassifier>
+      </properties>
+    </profile>
     <profile>
       <id>jdk8</id>
       <activation>
-        <jdk>1.8</jdk>
+          <jdk>1.8</jdk>
       </activation>
       <properties>
         <jdkClassifier>jdk8</jdkClassifier>
       </properties>
     </profile>
     <profile>
-      <id>jdk9</id>
+      <id>jdk10</id>
       <activation>
-        <jdk>1.9</jdk>
+        <jdk>10</jdk>
       </activation>
       <properties>
-        <jdkClassifier>jdk9</jdkClassifier>
+        <jdkClassifier>jdk10</jdkClassifier>
       </properties>
     </profile>
   </profiles>

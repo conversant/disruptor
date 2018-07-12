@@ -41,24 +41,20 @@ public class PushPullConcurrentQueue<E> implements ConcurrentQueue<E> {
     final LongAdder tail = new LongAdder();
 
     long p1, p2, p3, p4, p5, p6, p7;
-    @sun.misc.Contended
     long tailCache = 0L;
     long a1, a2, a3, a4, a5, a6, a7, a8;
 
     final E[] buffer;
 
     long r1, r2, r3, r4, r5, r6, r7;
-    @sun.misc.Contended
     long headCache = 0L;
     long c1, c2, c3, c4, c5, c6, c7, c8;
 
     final LongAdder head = new LongAdder();
 
-    public PushPullConcurrentQueue(final int size) {
-        int rs = 1;
-        while(rs < size) rs <<= 1;
-        this.size = rs;
-        this.mask = rs-1;
+    public PushPullConcurrentQueue(final int capacity) {
+        this.size = Capacity.getCapacity(capacity);
+        this.mask = this.size-1;
 
         buffer = (E[])new Object[this.size];
     }

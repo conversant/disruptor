@@ -59,7 +59,6 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
 
     // use the value in the L1 cache rather than reading from memory when possible
     long p1, p2, p3, p4, p5, p6, p7;
-    @sun.misc.Contended
     long tailCache = 0L;
     long a1, a2, a3, a4, a5, a6, a7, a8;
 
@@ -67,7 +66,6 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
     final E[] buffer;
 
     long r1, r2, r3, r4, r5, r6, r7;
-    @sun.misc.Contended
     long headCache = 0L;
     long c1, c2, c3, c4, c5, c6, c7, c8;
 
@@ -86,9 +84,7 @@ public class MultithreadConcurrentQueue<E> implements ConcurrentQueue<E> {
      */
 
     public MultithreadConcurrentQueue(final int capacity) {
-        int c = 1;
-        while(c < capacity) c <<=1;
-        size = c;
+        size = Capacity.getCapacity(capacity);
         mask = size - 1L;
         buffer = (E[])new Object[size];
     }
