@@ -36,7 +36,7 @@ final class Capacity {
         if(capacity >= MAX_POWER2) {
             c = MAX_POWER2;
         } else {
-            while(c < capacity) c <<=1;
+            while(c < capacity) c <<= 1;
         }
 
         if(isPowerOf2(c)) {
@@ -51,6 +51,6 @@ final class Capacity {
      *  i.e. capacity 1 is allowed
      */
     private static final boolean isPowerOf2(final int p) {
-        return p == 0x1 || ((p & 0x1) == 0);
+        return p > 0 && Integer.bitCount(p) == 1;
     }
 }
