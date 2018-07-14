@@ -619,8 +619,8 @@ public class PushPullBlockingQueueTest {
         // there is a problem in the native implementation
         // of null overwriting the added value on the last bucket
         // when the queue was just full
-        final int NRUN = 10_000;
-        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(64);
+        final int NRUN = 5_000;
+        final BlockingQueue<Integer> dbq = new PushPullBlockingQueue<Integer>(5000);
         final Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
