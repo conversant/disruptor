@@ -51,6 +51,7 @@ final class Capacity {
      *  i.e. capacity 1 is allowed
      */
     private static final boolean isPowerOf2(final int p) {
-        return p > 0 && Integer.bitCount(p) == 1;
+        // thanks mcheng for the suggestion
+        return (p & (p - 1)) == 0;
     }
 }
