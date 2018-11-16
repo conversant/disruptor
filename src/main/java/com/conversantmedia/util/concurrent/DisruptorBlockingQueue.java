@@ -29,11 +29,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A fixed length blocking queue based on the principles of:
- *
- *  http://disruptor.googlecode.com/files/Disruptor-1.0.pdf
- *
- * This class could be used where ArrayBlockingQueue would be otherwise.
  *
  * This is a lock free blocking queue that implements
  * a fixed length queue backed by a ring buffer.   Access to the ring buffer
