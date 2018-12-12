@@ -30,7 +30,7 @@ import static com.conversantmedia.util.concurrent.ContendedAtomicLong.CACHE_LINE
  * Created by jcairns on 12/11/14.
  */
 // abstract condition supporting common condition code
-abstract class AbstractWaitingCondition implements Condition {
+public abstract class AbstractWaitingCondition implements Condition {
 
     private static final int CACHE_LINE_REFS = CACHE_LINE/Long.BYTES;
 
