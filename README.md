@@ -23,7 +23,7 @@ For Java 8, Include Conversant Disruptor from Maven Central:
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.12</version>
+  <version>1.2.14</version>
   <classifier>jdk8</classifier>
 </dependency>
 ```
@@ -33,7 +33,7 @@ For Java 10:
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.12</version>
+  <version>1.2.14</version>
   <classifier>jdk10</classifier>
 </dependency>
 ```
@@ -44,7 +44,7 @@ Or through the default Java 8 jar
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.12</version>
+  <version>1.2.14</version>
 </dependency>
 ```
 

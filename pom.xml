@@ -5,7 +5,7 @@
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
   <packaging>jar</packaging>
-  <version>1.2.14-SNAPSHOT</version>
+  <version>1.2.14</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>https://github.com/conversant/disruptor</url>
   <description>Conversant Disruptor - very high throughput Java BlockingQueue</description>
@@ -21,8 +21,7 @@
     <developer>
       <name>John Cairns</name>
       <email>john@2ad.com</email>
-      <organization>Conversant, Inc.</organization>
-      <organizationUrl>http://engineering.conversantmedia.com</organizationUrl>
+      <organizationUrl>https://github.com/jac18281828</organizationUrl>
     </developer>
   </developers>
 
