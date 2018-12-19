@@ -1,5 +1,7 @@
 package com.conversantmedia.util.concurrent;
 
+import com.conversantmedia.util.concurrent.DisruptorBlockingQueue;
+import com.conversantmedia.util.concurrent.SpinPolicy;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -11,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by jcairns on 2/23/16.
  */
-@Ignore // stress test
 public class DisruptorFairSchedulingTest {
 
     private static final int NTHREAD = 4*Runtime.getRuntime().availableProcessors();

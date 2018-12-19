@@ -1,5 +1,6 @@
 package com.conversantmedia.util.concurrent;
 
+import com.conversantmedia.util.concurrent.ConcurrentStack;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,25 @@ public class ConcurrentStackTest {
     @After
     public void teardown() {
         executor.shutdown();
+    }
+
+    @Test
+    public void peekEmptyTest() {
+
+        final ConcurrentStack<Integer> stack = new ConcurrentStack<>(10);
+
+        Assert.assertNull(stack.peek());
+    }
+
+    @Test
+    public void peekTopTest() {
+
+        final ConcurrentStack<Integer> stack = new ConcurrentStack<>(10);
+
+        stack.push(100);
+
+        Assert.assertEquals(Integer.valueOf(100), stack.peek());
+
     }
 
     @Test

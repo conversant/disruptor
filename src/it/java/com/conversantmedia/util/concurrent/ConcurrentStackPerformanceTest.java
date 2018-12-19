@@ -1,6 +1,7 @@
 package com.conversantmedia.util.concurrent;
 
 import com.conversantmedia.util.collection.Stack;
+import com.conversantmedia.util.concurrent.ConcurrentStack;
 import org.junit.Ignore;
 import org.junit.Test;
 

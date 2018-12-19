@@ -20,13 +20,13 @@ package com.conversantmedia.util.concurrent;
  * #L%
  */
 
+import com.conversantmedia.util.concurrent.ConcurrentQueue;
 import org.junit.Ignore;
 import com.conversantmedia.util.estimation.Percentile;
 
 /**
  * Created by jcairns on 5/29/14.
  */
-@Ignore
 public class ConcurrentQueuePerformanceTest {
 
     // increase this number for a legit performance test

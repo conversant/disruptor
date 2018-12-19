@@ -157,16 +157,15 @@ public final class ConcurrentStack<N> implements BlockingStack<N> {
         // read the current cursor
         int spin = 0;
         for(;;) {
-
             final long readLock = seqLock.readLock();
             final int stackTop = this.stackTop.get();
-            final N  n = stack.get(stackTop-1);
-            if(seqLock.readLockHeld(readLock)) {
-                if(stackTop>0) {
-                    return stack.get(stackTop-1);
-                } else {
-                    return null;
-                }
+            if(stackTop > 0) {
+                final N  n = stack.get(stackTop-1);
+                if(seqLock.readLockHeld(readLock)) {
+                    return n;
+                } // else loop again
+            } else {
+                return null;
             }
 
             spin = Condition.progressiveYield(spin);
