@@ -5,7 +5,7 @@
     <groupId>com.conversantmedia</groupId>
     <artifactId>disruptor</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.15-SNAPSHOT</version>
+    <version>1.2.15</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/conversant/disruptor</url>
     <description>Conversant Disruptor - very high throughput Java BlockingQueue</description>
