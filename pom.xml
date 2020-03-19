@@ -60,7 +60,7 @@
     </prerequisites>
 
     <properties>
-        <jdk.version>1.8</jdk.version>
+        <jdk.version>11</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <snapshots.repo.id>ossrh</snapshots.repo.id>
@@ -156,12 +156,6 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <configuration>
-                        <classifier>${jdkClassifier}</classifier>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>2.6</version>
                 </plugin>
@@ -236,37 +230,6 @@
         </pluginManagement>
     </build>
 
-    <profiles>
-        <!-- Java 7 is no longer supported as of release 1.2.11 -->
-        <!-- Java 9 is no longer supported as of release 1.2.12 -->
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <jdkClassifier></jdkClassifier>
-            </properties>
-        </profile>
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <jdk>1.8</jdk>
-            </activation>
-            <properties>
-                <jdkClassifier>jdk8</jdkClassifier>
-            </properties>
-        </profile>
-        <profile>
-            <id>jdk10</id>
-            <activation>
-                <jdk>10</jdk>
-            </activation>
-            <properties>
-                <jdkClassifier>jdk10</jdkClassifier>
-            </properties>
-        </profile>
-    </profiles>
 
     <dependencies>
         <dependency>
