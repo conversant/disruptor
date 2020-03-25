@@ -1,5 +1,5 @@
 module com.conversantmedia.disruptor {
-    opens com.conversantmedia.util.collection;
-    opens com.conversantmedia.util.concurrent;
-    opens com.conversantmedia.util.estimation;
+    exports com.conversantmedia.util.collection;
+    exports com.conversantmedia.util.concurrent;
+    exports com.conversantmedia.util.estimation;
 }
