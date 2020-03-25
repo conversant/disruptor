@@ -17,9 +17,6 @@ Run the maven build to build and use the package.
 
 # Conversant Disruptor is on Maven Central
 
-It is possible to include Conversant Disruptor from Maven Central.  A classifier is no longer required as earlier versions of Java are no longer supported.   
-
-
 For Java 9 and above:
 
 ```
@@ -29,6 +26,8 @@ For Java 9 and above:
   <version>1.2.16</version>
 </dependency>
 ```
+
+A classifier is not required in the latest release.
 
 Java 8 is only supported in 1.2.15 and earlier.
 
@@ -42,8 +41,6 @@ Java 7 is only supported in 1.2.10 and earlier.
   <classifier>jdk7</classifier>
 </dependency>
 ```
-
-Java 9 is no longer supported.
 
 ## Discussion Forum
 
