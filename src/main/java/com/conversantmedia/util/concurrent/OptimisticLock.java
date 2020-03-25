@@ -42,6 +42,9 @@ public interface OptimisticLock {
     long tryWriteLock();
 
     /**
+     * @param time The time to wait to obtain the lock
+     * @param unit The units of time parameter
+     *
      * @return long - the token indicating the lock state, or 0 if not available
      *
      * @throws InterruptedException on interrupt

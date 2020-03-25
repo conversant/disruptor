@@ -5,7 +5,7 @@
     <groupId>com.conversantmedia</groupId>
     <artifactId>disruptor</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.16-SNAPSHOT</version>
+    <version>1.2.16</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/conversant/disruptor</url>
     <description>Conversant Disruptor - very high throughput Java BlockingQueue</description>
@@ -60,7 +60,7 @@
     </prerequisites>
 
     <properties>
-        <jdk.version>11</jdk.version>
+        <jdk.version>9</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <snapshots.repo.id>ossrh</snapshots.repo.id>

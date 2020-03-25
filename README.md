@@ -17,38 +17,22 @@ Run the maven build to build and use the package.
 
 # Conversant Disruptor is on Maven Central
 
-For Java 8, Include Conversant Disruptor from Maven Central:
+It is possible to include Conversant Disruptor from Maven Central.  A classifier is no longer required as earlier versions of Java are no longer supported.   
+
+
+For Java 9 and above:
 
 ```
 <dependency>
   <groupId>com.conversantmedia</groupId>
   <artifactId>disruptor</artifactId>
-  <version>1.2.14</version>
-  <classifier>jdk8</classifier>
-</dependency>
-```
-For Java 10:
-
-```
-<dependency>
-  <groupId>com.conversantmedia</groupId>
-  <artifactId>disruptor</artifactId>
-  <version>1.2.14</version>
-  <classifier>jdk10</classifier>
+  <version>1.2.16</version>
 </dependency>
 ```
 
-Or through the default Java 8 jar
+Java 8 is only supported in 1.2.15 and earlier.
 
-```
-<dependency>
-  <groupId>com.conversantmedia</groupId>
-  <artifactId>disruptor</artifactId>
-  <version>1.2.14</version>
-</dependency>
-```
-
-Java 7 is only supported in 1.2.10 and below.   
+Java 7 is only supported in 1.2.10 and earlier.   
 
 ```
 <dependency>
