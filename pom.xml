@@ -60,7 +60,6 @@
     </prerequisites>
 
     <properties>
-        <jdk.version>9</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <snapshots.repo.id>ossrh</snapshots.repo.id>
@@ -88,10 +87,9 @@
                     <version>3.8.1</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <source>${jdk.version}</source>
-                        <target>${jdk.version}</target>
+                        <source>11</source>
+                        <target>11</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
-                        <!-- <executable>/usr/lib/jvm/jdk-9/bin/javac</executable> -->
                     </configuration>
                 </plugin>
                 <plugin>
@@ -145,7 +143,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.9.1</version>
+                    <version>3.2.0</version>
                     <executions>
                         <execution>
                             <id>attach-javadocs</id>
@@ -204,7 +202,7 @@
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
                     <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.3</version>
+                    <version>1.6.7</version>
                     <extensions>true</extensions>
                     <configuration>
                         <serverId>ossrh</serverId>
@@ -229,7 +227,6 @@
             </plugins>
         </pluginManagement>
     </build>
-
 
     <dependencies>
         <dependency>

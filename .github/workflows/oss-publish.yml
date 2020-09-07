@@ -1,4 +1,4 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# This workflow will build a package using Maven and then publish it to oss.sonatype.org (Nexus Repository Manager)
 # For more information see: https://github.com/actions/setup-java#apache-maven-with-a-settings-path
 
 name: Publish package to Maven Central Repository
@@ -9,7 +9,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +20,13 @@ jobs:
         server-id: ossrh
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
-    
-    - name: Build with Maven
-      run: mvn -B clean package javadoc:jar source:jar --file pom.xml
-    - name: Deploy with Maven
-      run: mvn -B gpg:sign deploy --file pom.xml
+
+    - name: Setup GPG KeyRing
+      run: ./.github/scripts/decrypt_secret.sh
+      env:
+        GPG_KEYRING: ${{ secrets.GPG_KEYRING }}
+    - name: Build and Deploy with Maven
+      run: mvn --file pom.xml -D gpg.keyname=71F57B8AFAE29A33097ABFEC333223C0CA0C8429 -B clean package javadoc:jar source:jar gpg:sign deploy
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
