@@ -4,7 +4,7 @@
 name: Publish package to Maven Central Repository
 
 on:
-  release:
+    release:
     types: [created]
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
         GPG_KEYRING: ${{ secrets.GPG_KEYRING }}
         
     - name: Build and Deploy with Maven
-      run: mvn --file pom.xml -D gpg.keyname=71F57B8AFAE29A33097ABFEC333223C0CA0C8429 -B clean package verify javadoc:jar source:jar gpg:sign deploy
+      run: mvn --file pom.xml -D gpg.keyname=71F57B8AFAE29A33097ABFEC333223C0CA0C8429 -B clean package verify javadoc:jar source:jar gpg:sign 
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
