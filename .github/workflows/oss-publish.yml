@@ -25,8 +25,12 @@ jobs:
       run: ./.github/scripts/decrypt_secret.sh
       env:
         GPG_KEYRING: ${{ secrets.GPG_KEYRING }}
+        
     - name: Build and Deploy with Maven
-      run: mvn --file pom.xml -D gpg.keyname=71F57B8AFAE29A33097ABFEC333223C0CA0C8429 -B clean package javadoc:jar source:jar gpg:sign deploy
+      run: mvn --file pom.xml -D gpg.keyname=71F57B8AFAE29A33097ABFEC333223C0CA0C8429 -B clean package verify javadoc:jar source:jar gpg:sign deploy
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+    - name: Verify Build
+      run: ./.github/scripts/verify_build.sh
