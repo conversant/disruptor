@@ -36,12 +36,9 @@ package com.conversantmedia.util.collection;
  * @author John Cairns  {@literal <john@2ad.com>} Date: 7/9/12 Time: 8:53 AM
  */
 public class FixedStack<N> implements Stack<N> {
-    // implement a ring buffer to make sure that it is always safe to push an object into the stack,
-    // if stack size is exceeded, the eldest objects are overwritten
     private final int size;
     private final int mask;
     private final N[] stack;
-    // use a ring buffer to avoid object manipulation on the stack
     private int   stackTop;
 
     /**
