@@ -4,8 +4,9 @@
 name: Publish package to Maven Central Repository
 
 on:
-    release:
-    types: [created]
+  workflow_dispatch:
+#    release:
+#    types: [created]
 
 jobs:
   build:
