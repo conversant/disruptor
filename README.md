@@ -9,7 +9,12 @@ Disruptor is the highest performing intra-thread transfer mechanism available in
 <caption><strong>2017 Conversant Disruptor - Still the World's Fastest</strong></caption>
 </table>
 
-# Getting Started
+# Benchmark First!
+
+Conversant Disruptor was designed to run on Intel Xeon hardware.   For any other platform or 
+architecture always benchmark before using. 
+
+g# Getting Started
 
 Run the maven build to build and use the package.
 

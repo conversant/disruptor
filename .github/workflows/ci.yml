@@ -1,19 +1,14 @@
 name: Java CI with Maven
-
 on:
   push:
-    branches:
-      - master
   pull_request:
-    branches:
-      - master
-
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '11', '14' ]
+        java: ['11', '14']
     steps:
     - uses: actions/checkout@v4.2.2
     - name: Set up JDK ${{ matrix.java }}

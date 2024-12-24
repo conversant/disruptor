@@ -1,0 +1,22 @@
+name: Yamlfmt
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  run-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.4
+      - name: Install yamlfmt
+        run: |
+          go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+          strip $(which yamlfmt)
+      - name: Run yamlfmt
+        run: yamlfmt -lint .github/*.yml .github/workflows/*.yml
