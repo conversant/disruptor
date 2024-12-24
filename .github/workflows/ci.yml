@@ -10,13 +10,13 @@ jobs:
       matrix:
         java: ['11', '14']
     steps:
-    - uses: actions/checkout@v4.2.2
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v4.6.0
-      with:
-        java-version: ${{ matrix.java }}
-        distribution: 'zulu'
-    - name: print Java version
-      run: java -version
-    - name: Build
-      run: mvn -B --no-transfer-progress clean package verify
+      - uses: actions/checkout@v4.2.2
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4.6.0
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'zulu'
+      - name: print Java version
+        run: java -version
+      - name: Build
+        run: mvn -B --no-transfer-progress clean package verify
